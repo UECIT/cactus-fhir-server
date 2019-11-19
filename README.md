@@ -3,12 +3,12 @@
 
 To run this locally just run:
 ```bash
-`$ docker-compose up
+docker-compose up
 ```
 
-This will obtain the mySQL image, initialize the ```cdss-supplier``` database and run the ```populate_data.sql``` script which creates the tables and populates with the mock data.
+This will obtain the mySQL image, initialize the ```cdss_resources``` database and run the ```populate_data.sql``` script which creates the tables and populates with the mock data.
 
-It will also download and run the cdss-supplise-stub image from the docker registry in gitlab.com.
+It will also download and run the cds-fhir-server image from the docker registry in gitlab.com.
 
 Within the ```docker-compose.yml``` file. The mySQL host can be changed from ```cdss-mysql``` to ```localhost``` if the mysql server is being hosted on the local machine instead of the docker container.
 
