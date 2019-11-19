@@ -1,0 +1,6 @@
+version: '3.2'
+services:
+  cds-fhir-server:
+    image: cds-fhir-server
+    build: 
+      context: .
