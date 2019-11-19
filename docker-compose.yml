@@ -6,13 +6,13 @@ services:
       dockerfile: Dockerfile.mysql
     command: mysqld --default-authentication-plugin=mysql_native_password
     ports: 
-      - "3306:3306"
+      - "3306"
 
   cds-fhir-server:
     image:
       registry.gitlab.com/ems-test-harness/cds-fhir-server:latest
     environment: 
-      - SPRING_DATASOURCE_URL=jdbc:mysql://cdss-mysql:3306/cdss_supplier
+      - SPRING_DATASOURCE_URL=jdbc:mysql://cdss-mysql:3306/cdss_resources
     ports: 
       - "8080:8080"
     restart: on-failure:5
