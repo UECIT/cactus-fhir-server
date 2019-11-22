@@ -1,6 +1,6 @@
 version: '3.2'
 services:
-  cdss-mysql:
+  mysql:
     build: 
       context: .
       dockerfile: Dockerfile.mysql
@@ -8,11 +8,12 @@ services:
     ports: 
       - "3306"
 
-  cds-fhir-server:
-    image:
-      registry.gitlab.com/ems-test-harness/cds-fhir-server:latest
+  app:
+    image: cds-fhir-server
+    build:
+      context: .
     environment: 
-      - SPRING_DATASOURCE_URL=jdbc:mysql://cdss-mysql:3306/cdss_resources
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/cdss_resources
     ports: 
-      - "8080:8080"
+      - "8084:8084"
     restart: on-failure:5
