@@ -15,6 +15,7 @@ import org.hl7.fhir.dstu3.model.CarePlan.CarePlanStatus;
 import org.hl7.fhir.dstu3.model.Narrative;
 import org.hl7.fhir.dstu3.model.Narrative.NarrativeStatus;
 import org.hl7.fhir.dstu3.model.ResourceType;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,7 +55,7 @@ public class ResourceServiceTest {
     when(parser.parseResource(carePlanEntity.getResourceJson()))
         .thenReturn(carePlan);
 
-    CarePlan returnedResource = resourceService.getResource(1L, CarePlan.class);
+    IBaseResource returnedResource = resourceService.getResource(1L, CarePlan.class);
 
     assertThat(returnedResource, is(carePlan));
   }

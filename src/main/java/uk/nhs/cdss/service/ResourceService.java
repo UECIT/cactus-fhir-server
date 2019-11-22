@@ -6,6 +6,7 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.Resource;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Service;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.repos.ResourceRepository;
@@ -18,12 +19,12 @@ public class ResourceService {
 	private IParser fhirParser;
 	
 	@Transactional
-	public <T extends Resource> T getResource(Long id, Class<T> clazz) {
+	public IBaseResource getResource(Long id, Class<? extends IBaseResource> clazz) {
 
 		ResourceEntity resource = resourceRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException(new IdDt(id)));
 
-		final T dto = clazz.cast(fhirParser.parseResource(resource.getResourceJson()));
+		final IBaseResource dto = clazz.cast(fhirParser.parseResource(resource.getResourceJson()));
 		dto.setId(String.valueOf(id));
 
 		return dto;
