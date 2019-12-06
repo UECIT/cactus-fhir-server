@@ -16,7 +16,7 @@ import org.hl7.fhir.dstu3.model.ResourceType;
 @Entity
 @Table(name = "resource")
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResourceEntity {
