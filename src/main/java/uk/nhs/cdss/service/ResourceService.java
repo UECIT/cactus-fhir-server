@@ -41,4 +41,17 @@ public class ResourceService {
 		return resourceRepository.save(entity);
 	}
 
+	@Transactional
+	public ResourceEntity update(Long id, Resource resource) {
+		ResourceEntity old = resourceRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException(new IdDt(id)));
+
+		ResourceEntity updated = old.toBuilder()
+				.resourceJson(fhirParser.encodeResourceToString(resource))
+				.build();
+
+		return resourceRepository.save(updated);
+
+	}
+
 }
