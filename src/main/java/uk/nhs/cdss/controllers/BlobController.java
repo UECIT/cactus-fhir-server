@@ -59,7 +59,7 @@ public class BlobController {
     return ResponseEntity.created(URI.create("/blob/" + blob.getId()))
         .contentType(MediaType.valueOf(blob.getContentType()))
         .header("Digest", formatDigest(blob))
-        .contentLength(blob.getResourceData().length)
+        .contentLength(0)
         .build();
   }
 }
