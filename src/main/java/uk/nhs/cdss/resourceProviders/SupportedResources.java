@@ -123,7 +123,10 @@ public enum SupportedResources {
   CONCEPTMAP(ConceptMap .class),
   EXPANSIONPROFILE(ExpansionProfile .class),
   VALUESET(ValueSet .class),
-  TESTSCRIPT(TestScript .class);
+  TESTSCRIPT(TestScript .class),
+
+  /** CUSTOM RESOURCES **/
+  COORDINATES(CoordinateResource.class);
 
 
   private Class<? extends Resource> resourceClass;
