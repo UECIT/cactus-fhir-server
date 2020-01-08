@@ -1,7 +1,6 @@
 package uk.nhs.cdss.config;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.StrictErrorHandler;
 import ca.uhn.fhir.rest.server.ETagSupportEnum;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.RestfulServer;
@@ -9,11 +8,11 @@ import ca.uhn.fhir.rest.server.interceptor.CorsInterceptor;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import org.hl7.fhir.dstu3.model.CoordinateResource;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -24,12 +23,16 @@ import uk.nhs.cdss.service.ResourceService;
 
 @Configuration
 @WebServlet(urlPatterns = { "/fhir/*" }, displayName = "FHIR Server")
+@AllArgsConstructor
 public class FHIRRestfulServer extends RestfulServer {
 
 	private static final long serialVersionUID = 1L;
 
-	@Autowired
 	private ResourceService resourceService;
+	private FhirContext ctx;
+
+	private Collection<IResourceProvider> customResourceProviders;
+
 	/*
 	 * HAPI FHIR Restful Server (non-Javadoc)
 	 * 
@@ -37,10 +40,6 @@ public class FHIRRestfulServer extends RestfulServer {
 	 */
 	@Override
 	protected void initialize() throws ServletException {
-
-		FhirContext ctx = FhirContext.forDstu3();
-		ctx.registerCustomType(CoordinateResource.class);
-		ctx.setParserErrorHandler(new StrictErrorHandler());
 		setFhirContext(ctx);
 		setETagSupport(ETagSupportEnum.ENABLED);
 
@@ -63,10 +62,15 @@ public class FHIRRestfulServer extends RestfulServer {
 	
 	@PostConstruct
 	public void setResourceProviders() {
-		Collection<IResourceProvider> collect = Arrays.stream(SupportedResources.values())
+		Collection<IResourceProvider> genericProviders = Arrays.stream(SupportedResources.values())
 				.map(type -> new ResourceProvider(resourceService, type.getResourceClass()))
 				.collect(Collectors.toList());
-		setResourceProviders(collect);
+
+		Collection<IResourceProvider> resourceProviders =
+				Stream.concat(genericProviders.stream(), customResourceProviders.stream())
+					.collect(Collectors.toList());
+
+		setResourceProviders(resourceProviders);
 	}
 
 }

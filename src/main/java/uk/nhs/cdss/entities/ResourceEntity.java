@@ -11,6 +11,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.GenerationTime;
 import org.hl7.fhir.dstu3.model.ResourceType;
 
 @Entity
@@ -31,5 +33,17 @@ public class ResourceEntity {
 	
 	@Column(name = "resource_json")
 	private String resourceJson;
+
+	/**
+	 * Virtual generated index column on the first to have a context.reference or encounter.reference property
+	 * (For ReferralRequest and Composition types)
+	 */
+	@Generated(value = GenerationTime.ALWAYS)
+	@Column(name = "encounter_id",
+			columnDefinition = "VARCHAR(1000) AS (JSON_UNQUOTE(JSON_EXTRACT(JSON_EXTRACT(resource_json, "
+					+ "\"$.context.reference\", "
+					+ "\"$.encounter.reference\"), "
+					+ "\"$[0]\")) )")
+	private String encounterId;
 
 }
