@@ -3,10 +3,13 @@ package uk.nhs.cdss.service;
 import ca.uhn.fhir.model.primitive.IdDt;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.Resource;
+import org.hl7.fhir.dstu3.model.ResourceType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Service;
 import uk.nhs.cdss.entities.ResourceEntity;
@@ -29,6 +32,14 @@ public class ResourceService {
 		dto.setId(String.valueOf(id));
 
 		return dto;
+	}
+
+	@Transactional
+	public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
+		return resourceRepository.findAll()
+				.stream().parallel()
+				.filter(resourceEntity -> resourceEntity.getResourceType().equals(ResourceType.fromCode(clazz.getSimpleName())))
+				.collect(Collectors.toList());
 	}
 
 	@Transactional
@@ -57,5 +68,4 @@ public class ResourceService {
 				.resourceJson(fhirParser.encodeResourceToString(resource))
 				.build();
 	}
-
 }
