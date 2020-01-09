@@ -1,7 +1,5 @@
 package uk.nhs.cdss.resourceProviders;
 
-import uk.nhs.cdss.util.ResourceUtil;
-
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.annotation.RequiredParam;
 import ca.uhn.fhir.rest.annotation.Search;
@@ -9,6 +7,7 @@ import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.ReferralRequest;
@@ -16,6 +15,7 @@ import org.hl7.fhir.dstu3.model.ResourceType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Component;
 import uk.nhs.cdss.service.ResourceService;
+import uk.nhs.cdss.util.ResourceUtil;
 
 @Component
 @AllArgsConstructor
@@ -35,9 +35,15 @@ public class ReferralRequestProvider implements IResourceProvider {
 
     String encounterId = contextParam.getValue();
     return resourceService.getAllOfType(ReferralRequest.class).stream()
-        .filter(res -> res.getEncounterId().contains(encounterId))
         .map(res -> ResourceUtil.parseResource(res, ReferralRequest.class, fhirParser))
+        .filter(hasEncounter(encounterId))
         .collect(Collectors.toList());
+  }
+
+  private Predicate<ReferralRequest> hasEncounter(String encounterId) {
+    return comp -> comp != null
+        && comp.hasContext()
+        && comp.getContext().getReference().equals(encounterId);
   }
 
   @Override
