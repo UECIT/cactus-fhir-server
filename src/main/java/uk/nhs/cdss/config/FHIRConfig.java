@@ -6,7 +6,6 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
 import java.util.Arrays;
 import org.hl7.fhir.dstu3.model.CareConnectCarePlan;
 import org.hl7.fhir.dstu3.model.CareConnectCareTeam;
-import org.hl7.fhir.dstu3.model.CareConnectCondition;
 import org.hl7.fhir.dstu3.model.CareConnectEncounter;
 import org.hl7.fhir.dstu3.model.CareConnectEpisodeOfCare;
 import org.hl7.fhir.dstu3.model.CareConnectHealthcareService;
@@ -41,7 +40,7 @@ public class FHIRConfig {
     fhirParser.setPreferTypes(Arrays.asList(
         CareConnectCarePlan.class,
         CareConnectCareTeam.class,
-        CareConnectCondition.class,
+//        CareConnectCondition.class, TODO: NCTH-462
         CareConnectEncounter.class,
         CareConnectEpisodeOfCare.class,
         CareConnectHealthcareService.class,
