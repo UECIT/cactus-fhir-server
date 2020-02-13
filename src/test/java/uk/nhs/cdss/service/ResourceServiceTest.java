@@ -12,6 +12,7 @@ import java.util.Optional;
 import org.hl7.fhir.dstu3.model.CarePlan;
 import org.hl7.fhir.dstu3.model.CarePlan.CarePlanIntent;
 import org.hl7.fhir.dstu3.model.CarePlan.CarePlanStatus;
+import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Narrative;
 import org.hl7.fhir.dstu3.model.Narrative.NarrativeStatus;
 import org.hl7.fhir.dstu3.model.ResourceType;
@@ -24,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.nhs.cdss.entities.ResourceEntity;
+import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -35,6 +37,9 @@ public class ResourceServiceTest {
   private ResourceRepository resourceRepository;
 
   @Mock
+  private ResourceIdService resourceIdService;
+
+  @Mock
   private IParser parser;
 
   @Rule
@@ -42,7 +47,11 @@ public class ResourceServiceTest {
 
   @Before
   public void before() {
-    resourceService = new ResourceService(resourceRepository, parser);
+    resourceService = new ResourceService(
+        resourceRepository,
+        resourceIdService,
+        parser
+    );
   }
 
   @Test
@@ -50,24 +59,55 @@ public class ResourceServiceTest {
     ResourceEntity carePlanEntity = validCarePlanEntity();
     CarePlan carePlan = validCarePlan();
 
-    when(resourceRepository.findById(1L))
+    when(resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(1L))
         .thenReturn(Optional.of(carePlanEntity));
-    when(parser.parseResource(carePlanEntity.getResourceJson()))
+    when(parser.parseResource(CarePlan.class, carePlanEntity.getResourceJson()))
         .thenReturn(carePlan);
 
-    IBaseResource returnedResource = resourceService.getResource(1L, CarePlan.class);
+    IBaseResource returnedResource = resourceService.getResource(1L, null, CarePlan.class);
+
+    assertThat(returnedResource, is(carePlan));
+  }
+  @Test
+  public void shouldGetVersionedResource() {
+    ResourceEntity carePlanEntity = validCarePlanEntity();
+    CarePlan carePlan = validCarePlan();
+
+    when(resourceRepository.findById(new IdVersion(1L, 1L)))
+        .thenReturn(Optional.of(carePlanEntity));
+    when(parser.parseResource(CarePlan.class, carePlanEntity.getResourceJson()))
+        .thenReturn(carePlan);
+
+    IBaseResource returnedResource = resourceService.getResource(1L, 1L, CarePlan.class);
 
     assertThat(returnedResource, is(carePlan));
   }
 
   @Test
   public void shouldThrowExceptionWhenResourceNotFound() {
-    when(resourceRepository.findById(1L))
+    when(resourceRepository.findById(new IdVersion(1L, 1L)))
         .thenReturn(Optional.empty());
 
     expectedException.expect(ResourceNotFoundException.class);
 
-    resourceService.getResource(1L, CarePlan.class);
+    resourceService.getResource(1L, 1L, CarePlan.class);
+  }
+
+  @Test
+  public void shouldSaveVersionedResource() {
+    CarePlan carePlan = validCarePlan();
+    ResourceEntity carePlanEntity = validCarePlanEntity();
+
+    when(parser.encodeResourceToString(carePlan))
+        .thenReturn(carePlanEntity.getResourceJson());
+    when(resourceRepository.save(argThat(sameBeanAs(carePlanEntity)
+            .ignoring("idVersion"))))
+        .thenReturn(carePlanEntity);
+
+
+    ResourceEntity savedCarePlanEntity = resourceService.save(carePlan);
+
+    assertThat(savedCarePlanEntity, is(carePlanEntity));
   }
 
   @Test
@@ -78,7 +118,7 @@ public class ResourceServiceTest {
     when(parser.encodeResourceToString(carePlan))
         .thenReturn(carePlanEntity.getResourceJson());
     when(resourceRepository.save(argThat(sameBeanAs(carePlanEntity)
-            .ignoring("id"))))
+        .ignoring("idVersion"))))
         .thenReturn(carePlanEntity);
 
 
@@ -89,7 +129,7 @@ public class ResourceServiceTest {
 
   private ResourceEntity validCarePlanEntity() {
     return ResourceEntity.builder()
-        .id(1L)
+        .idVersion(new IdVersion(1L, 1L))
         .resourceType(ResourceType.CarePlan)
         .resourceJson(
             "{\"resourceType\":\"CarePlan\","
@@ -108,7 +148,7 @@ public class ResourceServiceTest {
     narrative.setDivAsString("<div xmlns=\\\"http://www.w3.org/1999/xhtml\\\">After Care Instructions</div>");
 
     CarePlan carePlan = new CarePlan();
-    carePlan.setId("1");
+    carePlan.setId(new IdType(1L).withVersion("1"));
     carePlan.setTitle("Self care");
     carePlan.setIntent(CarePlanIntent.OPTION);
     carePlan.setStatus(CarePlanStatus.ACTIVE);

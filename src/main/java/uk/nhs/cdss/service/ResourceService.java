@@ -1,37 +1,39 @@
 package uk.nhs.cdss.service;
 
-import ca.uhn.fhir.model.primitive.IdDt;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Service;
 import uk.nhs.cdss.entities.ResourceEntity;
+import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
+import uk.nhs.cdss.util.ResourceUtil;
 
 @Service
 @AllArgsConstructor
 public class ResourceService {
 
 	private ResourceRepository resourceRepository;
+	private ResourceIdService resourceIdService;
 	private IParser fhirParser;
 	
 	@Transactional
-	public IBaseResource getResource(Long id, Class<? extends IBaseResource> clazz) {
+	public IBaseResource getResource(Long id, Long version, Class<? extends IBaseResource> clazz) {
 
-		ResourceEntity resource = resourceRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException(new IdDt(id)));
+		ResourceEntity resource = (version != null
+				? resourceRepository.findById(new IdVersion(id, version))
+				: resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id))
+					.orElseThrow(() ->
+							new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
 
-		final IBaseResource dto = clazz.cast(fhirParser.parseResource(resource.getResourceJson()));
-		dto.setId(String.valueOf(id));
-
-		return dto;
+		return ResourceUtil.parseResource(resource, clazz, fhirParser);
 	}
 
 	@Transactional
@@ -44,28 +46,35 @@ public class ResourceService {
 
 	@Transactional
 	public ResourceEntity save(Resource resource) {
-		return resourceRepository.save(toEntity(resource));
+		var idVersion = new IdVersion(resourceIdService.nextId(), 1L);
+
+		ResourceEntity resourceEntity = ResourceEntity.builder()
+				.idVersion(idVersion)
+				.resourceType(resource.getResourceType())
+				.resourceJson(fhirParser.encodeResourceToString(resource))
+				.build();
+
+		return resourceRepository.save(resourceEntity);
 	}
 
 	@Transactional
 	public ResourceEntity update(Long id, Resource resource) {
-		var updated = resourceRepository.findById(id)
-				.map(withJson(resource))
-				.orElse(toEntity(resource));
+		var updated = resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
+				.map(entity -> updateRecord(entity, resource))
+				.orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
 
 		return resourceRepository.save(updated);
 	}
 
-	private ResourceEntity toEntity(Resource resource) {
-		return ResourceEntity.builder()
-				.resourceType(resource.getResourceType())
-				.resourceJson(fhirParser.encodeResourceToString(resource))
-				.build();
-	}
+	private ResourceEntity updateRecord(ResourceEntity entity, Resource newResource) {
 
-	private Function<ResourceEntity, ResourceEntity> withJson(Resource resource) {
-		return entity -> entity.toBuilder()
-				.resourceJson(fhirParser.encodeResourceToString(resource))
+		Long currentVersion = entity.getIdVersion().getVersion();
+		Long id = entity.getIdVersion().getId();
+
+		return ResourceEntity.builder()
+				.resourceJson(fhirParser.encodeResourceToString(newResource))
+				.resourceType(entity.getResourceType())
+				.idVersion(new IdVersion(id, currentVersion + 1L))
 				.build();
 	}
 }
