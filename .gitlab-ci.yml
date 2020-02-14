@@ -1,54 +1,98 @@
-# This file is a template, and might need editing before it works on your project.
 # Official docker image.
 image: docker:latest
 
-services:
-  - docker:dind
+# Builds use :deps image cached by latest build-develop run
+# All tags and branches create a matching docker image tag (ref slug)
+# Each develop commit creates a matching docker image tag (sha of commit) and updates :latest
 
-before_script:
-  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  - apk add zip
-
-build-master:
-  stage: build
-  script:
-    - docker build --pull -t "$CI_REGISTRY_IMAGE" .
-    - docker push "$CI_REGISTRY_IMAGE"
-    - cd eb && zip -r ../$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-eb.zip * .ebextensions
-  only:
-    - develop
-  artifacts:
-    paths:
-      - "*-eb.zip"
-
+stages:
+  - build
+  - deploy
 
 build-tags:
   stage: build
+  services:
+    - docker:dind
   script:
-    - docker build --pull -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    - cd eb && zip -r ../$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG-eb.zip * .ebextensions
-  only:
-    - tags
-  artifacts:
-    paths:
-      - "*-eb.zip"
-
-
-build-branches:
-  stage: build
-  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - docker pull $CI_REGISTRY_IMAGE:deps || true
     - docker build --cache-from $CI_REGISTRY_IMAGE:deps -t $CI_REGISTRY_IMAGE:deps --target deps .
     - docker build --pull --cache-from $CI_REGISTRY_IMAGE:deps -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  only:
+    - tags
+
+build-develop:
+  stage: build
+  services:
+    - docker:dind
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:deps || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:deps -t $CI_REGISTRY_IMAGE:deps --target deps .
+    - docker build --pull --cache-from $CI_REGISTRY_IMAGE:deps -t "$CI_REGISTRY_IMAGE:develop-$CI_COMMIT_SHORT_SHA" .
+    - docker tag "$CI_REGISTRY_IMAGE:develop-$CI_COMMIT_SHORT_SHA" "$CI_REGISTRY_IMAGE:latest"
+    - docker push "$CI_REGISTRY_IMAGE:develop-$CI_COMMIT_SHORT_SHA"
+    - docker push $CI_REGISTRY_IMAGE:latest
     - docker push $CI_REGISTRY_IMAGE:deps
-    - cd eb && zip -r ../$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-eb.zip * .ebextensions
+  only:
+    - develop
+
+build-branches:
+  stage: build
+  services:
+    - docker:dind
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:deps || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:deps -t $CI_REGISTRY_IMAGE:deps --target deps .
+    - docker build --pull --cache-from $CI_REGISTRY_IMAGE:deps -t $CI_REGISTRY_IMAGE:branch-$CI_COMMIT_REF_SLUG .
+    - docker push "$CI_REGISTRY_IMAGE:branch-$CI_COMMIT_REF_SLUG"
   only:
     - branches
   except:
     - master
     - develop
+
+eb-tags:
+  stage: deploy
+  script:
+    - apk add zip
+    - sed s/{{tag}}/$CI_COMMIT_REF_SLUG/ eb/Dockerrun.aws.template.json > eb/Dockerrun.aws.json
+    - cd eb && zip -r ../$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG-eb.zip Dockerrun.aws.json .ebextensions
+  only:
+    - tags
   artifacts:
     paths:
       - "*-eb.zip"
+      - README.md
 
+eb-develop:
+  stage: deploy
+  script:
+    - apk add zip
+    - sed s/{{tag}}/develop-$CI_COMMIT_SHORT_SHA/ eb/Dockerrun.aws.template.json > eb/Dockerrun.aws.json
+    - cd eb && zip -r ../$CI_PROJECT_NAME-develop-$CI_COMMIT_SHORT_SHA-eb.zip Dockerrun.aws.json .ebextensions
+  only:
+    - develop
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - "*-eb.zip"
+      - README.md
+
+eb-branches:
+  stage: deploy
+  script:
+    - apk add zip
+    - sed s/{{tag}}/branch-$CI_COMMIT_REF_SLUG/ eb/Dockerrun.aws.template.json > eb/Dockerrun.aws.json
+    - cd eb && zip -r ../$CI_PROJECT_NAME-branch-$CI_COMMIT_REF_SLUG-eb.zip Dockerrun.aws.json .ebextensions
+  only:
+    - branches
+  except:
+    - develop
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - "*-eb.zip"
+      - README.md

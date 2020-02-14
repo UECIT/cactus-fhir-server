@@ -1,7 +1,7 @@
 {
     "AWSEBDockerrunVersion": "1",
     "Image": {
-      "Name": "registry.gitlab.com/ems-test-harness/cds-fhir-server:latest",
+      "Name": "registry.gitlab.com/ems-test-harness/cds-fhir-server:{{tag}}",
       "Update": "true"
     },
     "Ports": [
