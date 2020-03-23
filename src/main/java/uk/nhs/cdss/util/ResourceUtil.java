@@ -4,6 +4,8 @@ import ca.uhn.fhir.parser.DataFormatException;
 import ca.uhn.fhir.parser.IParser;
 import lombok.experimental.UtilityClass;
 import org.hl7.fhir.dstu3.model.IdType;
+import org.hl7.fhir.dstu3.model.ListResource;
+import org.hl7.fhir.dstu3.model.ResourceType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,14 @@ public class ResourceUtil {
       LOG.warn("Resource entity {} could not be parsed as {} with message {}", res.getResourceJson(), type, e.getMessage());
     }
     return null;
+  }
+
+  public ResourceType getResourceType(Class<? extends IBaseResource> clazz) {
+    // List is the only resource where the class doesn't match the type name.
+    if (clazz.isAssignableFrom(ListResource.class)) {
+      return ResourceType.List;
+    }
+    return ResourceType.fromCode(clazz.getSimpleName());
   }
 
 }
