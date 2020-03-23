@@ -3,18 +3,21 @@ package uk.nhs.cdss.service;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Resource;
-import org.hl7.fhir.dstu3.model.ResourceType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Service;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
 import uk.nhs.cdss.util.ResourceUtil;
+import uk.nhs.cdss.util.VersionUtil;
 
 @Service
 @AllArgsConstructor
@@ -23,6 +26,24 @@ public class ResourceService {
 	private ResourceRepository resourceRepository;
 	private ResourceIdService resourceIdService;
 	private IParser fhirParser;
+
+	@AllArgsConstructor(access = AccessLevel.PRIVATE)
+	public class GetBy<T extends IBaseResource> {
+		private Class<T> type;
+		public List<T> by(List<Predicate<T>> conditions) {
+			var resourceStream = ResourceService.this.getAllOfType(type).stream()
+					.map(res -> ResourceUtil.parseResource(res, type, fhirParser))
+					.filter(Objects::nonNull)
+					// 'And' all the predicates together
+					.filter(conditions.stream().reduce(x->true, Predicate::and));
+
+			return VersionUtil.collectLatest(resourceStream);
+		}
+	}
+
+	public <T extends IBaseResource> GetBy<T> get(Class<T> type) {
+		return new GetBy<>(type);
+	}
 	
 	@Transactional
 	public IBaseResource getResource(Long id, Long version, Class<? extends IBaseResource> clazz) {
@@ -40,7 +61,7 @@ public class ResourceService {
 	public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
 		return resourceRepository.findAll()
 				.stream().parallel()
-				.filter(resourceEntity -> resourceEntity.getResourceType().equals(ResourceType.fromCode(clazz.getSimpleName())))
+				.filter(resourceEntity -> resourceEntity.getResourceType().equals(ResourceUtil.getResourceType(clazz)))
 				.collect(Collectors.toList());
 	}
 
