@@ -2,6 +2,7 @@ package uk.nhs.cdss.service;
 
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -30,6 +31,9 @@ public class ResourceService {
 	@AllArgsConstructor(access = AccessLevel.PRIVATE)
 	public class GetBy<T extends IBaseResource> {
 		private Class<T> type;
+		public List<T> by(Predicate<T> condition) {
+		  return by(Collections.singletonList(condition));
+    }
 		public List<T> by(List<Predicate<T>> conditions) {
 			var resourceStream = ResourceService.this.getAllOfType(type).stream()
 					.map(res -> ResourceUtil.parseResource(res, type, fhirParser))
