@@ -1,25 +1,55 @@
 package uk.nhs.cdss.resourceProviders;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.Include;
 import ca.uhn.fhir.rest.annotation.IncludeParam;
 import ca.uhn.fhir.rest.annotation.RequiredParam;
 import ca.uhn.fhir.rest.annotation.Search;
+import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
+import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleType;
 import org.hl7.fhir.dstu3.model.Encounter;
+import org.hl7.fhir.dstu3.model.IdType;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Component;
 import uk.nhs.cdss.service.EncounterReportService;
+import uk.nhs.cdss.service.ResourceService;
 
 @Component
 @RequiredArgsConstructor
 public class EncounterProvider implements IResourceProvider {
 
   private final EncounterReportService encounterReportService;
+  private final ResourceService resourceService;
+  private final FhirContext context;
+
+  @Search
+  public List<Encounter> searchByPatient(
+      @RequiredParam(name = Encounter.SP_PATIENT, chainWhitelist = Patient.SP_IDENTIFIER) ReferenceParam param) {
+
+    TokenParam identifierParam = param.toTokenParam(context);
+
+    return resourceService.get(Encounter.class)
+        .by(encounter -> {
+          IdType id = new IdType(encounter.getSubject().getReference());
+
+          //TODO: This seems inefficient, have to get the patient for each case!?
+          Patient patient = context.newRestfulGenericClient(id.getBaseUrl())
+              .read().resource(Patient.class)
+              .withId(id)
+              .execute();
+
+          return patient.getIdentifier().stream()
+              .anyMatch(identifier -> identifierParam.getSystem().equals(identifier.getSystem())
+                  && identifierParam.getValue().equals(identifier.getValue()));
+        });
+  }
 
   @Search
   public Bundle getEncounterReport(
