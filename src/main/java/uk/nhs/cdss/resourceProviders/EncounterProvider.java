@@ -11,6 +11,7 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleType;
 import org.hl7.fhir.dstu3.model.Encounter;
@@ -23,6 +24,7 @@ import uk.nhs.cdss.service.ResourceService;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class EncounterProvider implements IResourceProvider {
 
   private final EncounterReportService encounterReportService;
@@ -37,17 +39,26 @@ public class EncounterProvider implements IResourceProvider {
 
     return resourceService.get(Encounter.class)
         .by(encounter -> {
+
+          if (!encounter.hasSubject()) {
+            return false;
+          }
           IdType id = new IdType(encounter.getSubject().getReference());
 
-          //TODO: This seems inefficient, have to get the patient for each case!?
-          Patient patient = context.newRestfulGenericClient(id.getBaseUrl())
-              .read().resource(Patient.class)
-              .withId(id)
-              .execute();
+          try {
+            //TODO: This seems inefficient, have to get the patient for each case!?
+            Patient patient = context.newRestfulGenericClient(id.getBaseUrl())
+                .read().resource(Patient.class)
+                .withId(id)
+                .execute();
 
-          return patient.getIdentifier().stream()
-              .anyMatch(identifier -> identifierParam.getSystem().equals(identifier.getSystem())
-                  && identifierParam.getValue().equals(identifier.getValue()));
+            return patient.getIdentifier().stream()
+                .anyMatch(identifier -> identifierParam.getSystem().equals(identifier.getSystem())
+                    && identifierParam.getValue().equals(identifier.getValue()));
+          } catch (Exception e) {
+            log.error("Unable to find patient {} for encounter {}: {}", id.getValue(), encounter.getId(), e.getMessage());
+            return false;
+          }
         });
   }
 
