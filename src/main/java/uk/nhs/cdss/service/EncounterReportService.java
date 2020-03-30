@@ -4,7 +4,9 @@ import static java.util.Arrays.asList;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.hl7.fhir.dstu3.model.Appointment;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntrySearchComponent;
@@ -72,6 +74,23 @@ public class EncounterReportService {
         .map(ReferralRequest::getRequester)
         .map(ReferralRequestRequesterComponent::getAgent)
         .forEach(addReferencedResource(bundle));
+
+    // Recursive revinclude on Appointment.incomingReferral
+    addAppointments(referralRequests, bundle);
+  }
+
+  private void addAppointments(List<ReferralRequest> referralRequests, Bundle bundle) {
+    List<String> referralRequestReferences = referralRequests.stream()
+        .map(rr -> referenceService.buildUrl(ResourceType.ReferralRequest, rr.getIdElement().toVersionless()))
+        .collect(Collectors.toUnmodifiableList());
+
+    resourceService.get(Appointment.class)
+        .by(asList(
+            Appointment::hasIncomingReferral,
+            app -> app.getIncomingReferral().stream()
+                .map(Reference::getReference)
+                .anyMatch(referralRequestReferences::contains)))
+        .forEach(addResource(bundle));
   }
 
   public void addCarePlans(Bundle bundle, String encounterId) {
