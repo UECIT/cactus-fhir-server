@@ -103,18 +103,12 @@ public class EncounterReportService {
   }
 
   public void addCompositions(Bundle bundle, String encounterId) {
-    List<Composition> compositions = resourceService.get(Composition.class)
+    resourceService.get(Composition.class)
         .by(asList(
             Composition::hasEncounter,
             comp -> comp.getEncounter().getReference().equals(encounterId)
-        ));
-
-    compositions.forEach(addResource(bundle));
-
-    // Recursive include ReferralRequest.requester.agent
-    compositions.stream()
-        .map(Composition::addAuthor)
-        .forEach(addReferencedResource(bundle));
+        ))
+        .forEach(addResource(bundle));
   }
 
   public void addLists(Bundle bundle, String encounterId) {
@@ -127,12 +121,18 @@ public class EncounterReportService {
   }
 
   public void addQuestionnaireResponses(Bundle bundle, String encounterId) {
-    resourceService.get(QuestionnaireResponse.class)
+    List<QuestionnaireResponse> qrs = resourceService.get(QuestionnaireResponse.class)
         .by(asList(
             QuestionnaireResponse::hasContext,
             list -> list.getContext().getReference().equals(encounterId)
-        ))
-        .forEach(addResource(bundle));
+        ));
+
+    qrs.forEach(addResource(bundle));
+
+    // Recursive include Questionnaires
+    qrs.stream()
+        .map(QuestionnaireResponse::getQuestionnaire)
+        .forEach(addReferencedResource(bundle));
   }
 
   private Consumer<IBaseResource> addResource(Bundle bundle) {
