@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.hl7.fhir.dstu3.model.Appointment;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntrySearchComponent;
@@ -32,6 +31,7 @@ public class EncounterReportService {
 
   private final ResourceService resourceService;
   private final ReferenceService referenceService;
+  private final AppointmentService appointmentService;
   private final GenericResourceLocator resourceLocator;
 
   public String addEncounter(Bundle bundle, long encounterId) {
@@ -84,12 +84,7 @@ public class EncounterReportService {
         .map(rr -> referenceService.buildUrl(ResourceType.ReferralRequest, rr.getIdElement().toVersionless()))
         .collect(Collectors.toUnmodifiableList());
 
-    resourceService.get(Appointment.class)
-        .by(asList(
-            Appointment::hasIncomingReferral,
-            app -> app.getIncomingReferral().stream()
-                .map(Reference::getReference)
-                .anyMatch(referralRequestReferences::contains)))
+    appointmentService.getByReferrals(referralRequestReferences)
         .forEach(addResource(bundle));
   }
 
