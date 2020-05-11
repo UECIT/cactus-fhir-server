@@ -10,7 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class RetryUtilTest {
+public class RetryUtilsTest {
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
@@ -26,7 +26,7 @@ public class RetryUtilTest {
         throw new FhirClientConnectionException(new ConnectException());
       }, null);
     } finally {
-      assertThat(count.get(), is(4)); //3 retires executes 4 times
+      assertThat(count.get(), is(4)); //3 retries executes 4 times
     }
   }
 
