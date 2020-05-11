@@ -21,6 +21,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Component;
 import uk.nhs.cdss.service.EncounterReportService;
 import uk.nhs.cdss.service.ResourceService;
+import uk.nhs.cdss.util.RetryUtils;
 
 @Component
 @RequiredArgsConstructor
@@ -46,11 +47,13 @@ public class EncounterProvider implements IResourceProvider {
           IdType id = new IdType(encounter.getSubject().getReference());
 
           try {
+            String baseUrl = id.getBaseUrl();
             //TODO: This seems inefficient, have to get the patient for each case!?
-            Patient patient = context.newRestfulGenericClient(id.getBaseUrl())
-                .read().resource(Patient.class)
-                .withId(id)
-                .execute();
+            Patient patient = RetryUtils.retry(() -> context.newRestfulGenericClient(baseUrl)
+                    .read().resource(Patient.class)
+                    .withId(id)
+                    .execute(),
+                baseUrl);
 
             return patient.getIdentifier().stream()
                 .anyMatch(identifier -> identifierParam.getSystem().equals(identifier.getSystem())

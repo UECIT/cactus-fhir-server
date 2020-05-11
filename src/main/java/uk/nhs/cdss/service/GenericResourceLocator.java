@@ -7,6 +7,7 @@ import org.hl7.fhir.dstu3.model.Reference;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.springframework.stereotype.Service;
+import uk.nhs.cdss.util.RetryUtils;
 
 @Service
 @AllArgsConstructor
@@ -26,11 +27,14 @@ public class GenericResourceLocator {
 
     IIdType idType = reference.getReferenceElement();
 
-    IBaseResource resource = fhirContext.newRestfulGenericClient(idType.getBaseUrl())
+    String baseUrl = idType.getBaseUrl();
+    IBaseResource resource = RetryUtils.retry(() -> fhirContext.newRestfulGenericClient(
+        baseUrl)
         .read()
         .resource(idType.getResourceType())
         .withId(idType)
-        .execute();
+        .execute(),
+        baseUrl);
     return Optional.of(resource);
   }
 
