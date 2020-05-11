@@ -26,6 +26,7 @@ jobs:
 
   publish-app:
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - uses: actions/checkout@v2
       - name: Push to GitHub Packages
@@ -36,3 +37,14 @@ jobs:
           registry: docker.pkg.github.com
           repository: uecit/cactus-fhir-server/cactus-fhir-server
           tag_with_ref: true
+
+  invoke-deployment:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')
+    needs: publish-app
+    steps:
+      - name: Invoke deployment hook
+        uses: distributhor/workflow-webhook@v1
+        env:
+          webhook_url: ${{ secrets.WEBHOOK_URL }}
+          webhook_secret: ${{ secrets.WEBHOOK_SECRET }}
