@@ -37,6 +37,7 @@ jobs:
           registry: docker.pkg.github.com
           repository: uecit/cactus-fhir-server/cactus-fhir-server
           tag_with_ref: true
+          tag_with_sha: true
 
   invoke-deployment:
     runs-on: ubuntu-latest
