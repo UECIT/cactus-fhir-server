@@ -148,6 +148,13 @@
       <version>20190722</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+      <version>1.4.194</version>
+    </dependency>
   </dependencies>
 
   <build>
