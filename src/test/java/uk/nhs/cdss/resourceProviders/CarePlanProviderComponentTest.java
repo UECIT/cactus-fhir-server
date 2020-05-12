@@ -20,6 +20,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
@@ -28,6 +29,7 @@ import uk.nhs.cdss.repos.ResourceRepository;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
+@TestPropertySource(locations = "classpath:application-test.properties")
 public class CarePlanProviderComponentTest {
 
   @Autowired
