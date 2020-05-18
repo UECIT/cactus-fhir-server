@@ -6,6 +6,7 @@ import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
+import javax.persistence.Index;
 import javax.persistence.Lob;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -17,12 +18,11 @@ import lombok.Setter;
 import org.hl7.fhir.dstu3.model.ResourceType;
 
 @Entity
-@Table(name = "resource_versioned")
-@Getter
-@Setter
+@Data
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "resource_versioned")
 public class ResourceEntity {
 
 	@EmbeddedId
@@ -36,18 +36,6 @@ public class ResourceEntity {
 	@Setter
 	@Lob
 	private String resourceJson;
-
-//	/**
-//	 * Virtual generated index column on the first to have a context.reference or encounter.reference property
-//	 * (For ReferralRequest and Composition types)
-//	 */
-//	@Generated(value = GenerationTime.ALWAYS)
-//	@Column(name = "encounter_id",
-//			columnDefinition = "VARCHAR(1000) AS (JSON_UNQUOTE(JSON_EXTRACT(JSON_EXTRACT(resource_json, "
-//					+ "\"$.context.reference\", "
-//					+ "\"$.encounter.reference\"), "
-//					+ "\"$[0]\")) )")
-//	private String encounterId;
 
 	@Data
 	@NoArgsConstructor

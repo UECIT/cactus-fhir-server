@@ -24,82 +24,93 @@ import uk.nhs.cdss.util.VersionUtil;
 @AllArgsConstructor
 public class ResourceService {
 
-	private ResourceRepository resourceRepository;
-	private ResourceIdService resourceIdService;
-	private IParser fhirParser;
+  private final ResourceRepository resourceRepository;
+  private final ResourceIdService resourceIdService;
+  private final ResourceIndexService resourceIndexService;
+  private final IParser fhirParser;
 
-	@AllArgsConstructor(access = AccessLevel.PRIVATE)
-	public class GetBy<T extends IBaseResource> {
-		private Class<T> type;
-		public List<T> by(Predicate<T> condition) {
-		  return by(Collections.singletonList(condition));
+  @AllArgsConstructor(access = AccessLevel.PRIVATE)
+  public class GetBy<T extends IBaseResource> {
+
+    private Class<T> type;
+
+    public List<T> by(Predicate<T> condition) {
+      return by(Collections.singletonList(condition));
     }
-		public List<T> by(List<Predicate<T>> conditions) {
-			var resourceStream = ResourceService.this.getAllOfType(type).stream()
-					.map(res -> ResourceUtil.parseResource(res, type, fhirParser))
-					.filter(Objects::nonNull)
-					// 'And' all the predicates together
-					.filter(conditions.stream().reduce(x->true, Predicate::and));
 
-			return VersionUtil.collectLatest(resourceStream);
-		}
-	}
+    public List<T> by(List<Predicate<T>> conditions) {
+      var resourceStream = ResourceService.this.getAllOfType(type).stream()
+          .map(res -> ResourceUtil.parseResource(res, type, fhirParser))
+          .filter(Objects::nonNull)
+          // 'And' all the predicates together
+          .filter(conditions.stream().reduce(x -> true, Predicate::and));
 
-	public <T extends IBaseResource> GetBy<T> get(Class<T> type) {
-		return new GetBy<>(type);
-	}
-	
-	@Transactional
-	public IBaseResource getResource(Long id, Long version, Class<? extends IBaseResource> clazz) {
+      return VersionUtil.collectLatest(resourceStream);
+    }
+  }
 
-		ResourceEntity resource = (version != null
-				? resourceRepository.findById(new IdVersion(id, version))
-				: resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id))
-					.orElseThrow(() ->
-							new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
+  public <T extends IBaseResource> GetBy<T> get(Class<T> type) {
+    return new GetBy<>(type);
+  }
 
-		return ResourceUtil.parseResource(resource, clazz, fhirParser);
-	}
+  @Transactional
+  public IBaseResource getResource(Long id, Long version, Class<? extends IBaseResource> clazz) {
 
-	@Transactional
-	public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
-		return resourceRepository.findAll()
-				.stream().parallel()
-				.filter(resourceEntity -> resourceEntity.getResourceType().equals(ResourceUtil.getResourceType(clazz)))
-				.collect(Collectors.toList());
-	}
+    ResourceEntity resource = (version != null
+        ? resourceRepository.findById(new IdVersion(id, version))
+        : resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id))
+        .orElseThrow(() ->
+            new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
 
-	@Transactional
-	public ResourceEntity save(Resource resource) {
-		var idVersion = new IdVersion(resourceIdService.nextId(), 1L);
+    return ResourceUtil.parseResource(resource, clazz, fhirParser);
+  }
 
-		ResourceEntity resourceEntity = ResourceEntity.builder()
-				.idVersion(idVersion)
-				.resourceType(resource.getResourceType())
-				.resourceJson(fhirParser.encodeResourceToString(resource))
-				.build();
+  @Transactional
+  public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
+    return resourceRepository.findAll()
+        .stream().parallel()
+        .filter(resourceEntity -> resourceEntity.getResourceType()
+            .equals(ResourceUtil.getResourceType(clazz)))
+        .collect(Collectors.toList());
+  }
 
-		return resourceRepository.save(resourceEntity);
-	}
+  @Transactional
+  public ResourceEntity save(Resource resource) {
+    var idVersion = new IdVersion(resourceIdService.nextId(), 1L);
 
-	@Transactional
-	public ResourceEntity update(Long id, Resource resource) {
-		var updated = resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
-				.map(entity -> updateRecord(entity, resource))
-				.orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
+    ResourceEntity resourceEntity = ResourceEntity.builder()
+        .idVersion(idVersion)
+        .resourceType(resource.getResourceType())
+        .resourceJson(fhirParser.encodeResourceToString(resource))
+        .build();
 
-		return resourceRepository.save(updated);
-	}
+    resourceIndexService.update(resource, resourceEntity);
 
-	private ResourceEntity updateRecord(ResourceEntity entity, Resource newResource) {
+    return resourceRepository.save(resourceEntity);
+  }
 
-		Long currentVersion = entity.getIdVersion().getVersion();
-		Long id = entity.getIdVersion().getId();
+  @Transactional
+  public ResourceEntity update(Long id, Resource resource) {
+    var updated = resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
+        .map(entity -> updateRecord(entity, resource))
+        .orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
 
-		return ResourceEntity.builder()
-				.resourceJson(fhirParser.encodeResourceToString(newResource))
-				.resourceType(entity.getResourceType())
-				.idVersion(new IdVersion(id, currentVersion + 1L))
-				.build();
-	}
+
+    updated = resourceRepository.save(updated);
+		resourceIndexService.update(resource, updated);
+
+		return updated;
+  }
+
+  private ResourceEntity updateRecord(ResourceEntity entity, Resource newResource) {
+
+    Long currentVersion = entity.getIdVersion().getVersion();
+    Long id = entity.getIdVersion().getId();
+
+    return ResourceEntity.builder()
+        .resourceJson(fhirParser.encodeResourceToString(newResource))
+        .resourceType(entity.getResourceType())
+        .idVersion(new IdVersion(id, currentVersion + 1L))
+        .build();
+  }
 }

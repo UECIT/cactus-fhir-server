@@ -37,6 +37,9 @@ public class ResourceServiceTest {
   private ResourceRepository resourceRepository;
 
   @Mock
+  private ResourceIndexService resourceIndexService;
+
+  @Mock
   private ResourceIdService resourceIdService;
 
   @Mock
@@ -50,6 +53,7 @@ public class ResourceServiceTest {
     resourceService = new ResourceService(
         resourceRepository,
         resourceIdService,
+        resourceIndexService,
         parser
     );
   }

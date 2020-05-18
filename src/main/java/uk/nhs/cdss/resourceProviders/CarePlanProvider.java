@@ -12,6 +12,7 @@ import org.hl7.fhir.dstu3.model.CarePlan;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Component;
+import uk.nhs.cdss.service.ResourceIndexService;
 import uk.nhs.cdss.service.ResourceService;
 
 @Component
@@ -19,6 +20,7 @@ import uk.nhs.cdss.service.ResourceService;
 public class CarePlanProvider implements IResourceProvider {
 
   private ResourceService resourceService;
+  private ResourceIndexService resourceIndexService;
 
   @Search
   public Collection<CarePlan> findByEncounterContext(@RequiredParam(name= CarePlan.SP_CONTEXT)
@@ -29,11 +31,8 @@ public class CarePlanProvider implements IResourceProvider {
       throw new InvalidRequestException("Resource type for 'context' must be 'Encounter'");
     }
 
-    return resourceService.get(CarePlan.class)
-        .by(Arrays.asList(
-            CarePlan::hasContext,
-            rr -> rr.getContext().getReference().equals(contextParam.getValue())
-        ));
+    return resourceIndexService.search(CarePlan.class)
+        .eq(CarePlan.SP_CONTEXT, contextParam.getValue());
   }
 
   @Override

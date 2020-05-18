@@ -8,7 +8,8 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.hamcrest.CustomTypeSafeMatcher;
 import org.hamcrest.Matcher;
 import org.hl7.fhir.dstu3.model.CarePlan;
@@ -24,7 +25,9 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
+import uk.nhs.cdss.entities.ResourceIndex;
 import uk.nhs.cdss.fixtures.CarePlanFixtures;
+import uk.nhs.cdss.repos.ResourceIndexRepository;
 import uk.nhs.cdss.repos.ResourceRepository;
 
 @SpringBootTest
@@ -41,6 +44,9 @@ public class CarePlanProviderComponentTest {
   @MockBean
   private ResourceRepository resourceRepository;
 
+  @MockBean
+  private ResourceIndexRepository resourceIndexRepository;
+
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
@@ -49,10 +55,21 @@ public class CarePlanProviderComponentTest {
     CarePlan expected = CarePlanFixtures.carePlan();
     ResourceEntity resourceEntity = ResourceEntity.builder()
         .resourceType(ResourceType.CarePlan)
-        .idVersion(new IdVersion(1L , 1L))
+        .idVersion(new IdVersion(1L, 1L))
         .resourceJson(fhirParser.encodeResourceToString(expected))
         .build();
-    when(resourceRepository.findAll()).thenReturn(Collections.singletonList(resourceEntity));
+
+    ResourceIndex resourceIndex = new ResourceIndex();
+    resourceIndex.setType(ResourceType.CarePlan);
+    resourceIndex.setPath(CarePlan.SP_CONTEXT);
+    resourceIndex.setValue("Encounter/2");
+    resourceIndex.setResourceId(1L);
+
+    when(resourceIndexRepository.findAllByTypeEqualsAndPathEqualsAndValueEquals(
+        ResourceType.CarePlan, CarePlan.SP_CONTEXT, "Encounter/2"))
+        .thenReturn(List.of(resourceIndex));
+    when(resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(1L))
+        .thenReturn(Optional.of(resourceEntity));
 
     Collection<CarePlan> results = carePlanProvider
         .findByEncounterContext(referenceParam(expected));

@@ -15,12 +15,15 @@ public class ResourceIdIncrementerImpl implements ResourceIdIncrementer {
   public long incrementAndGet(Long id) {
     entityManager.createNativeQuery(
         "UPDATE resource_id "
-            + "SET value = LAST_INSERT_ID(value + 1) "
+            + "SET value = value + 1 "
             + "WHERE id = :id")
         .setParameter("id", id)
         .executeUpdate();
 
-    var query = entityManager.createNativeQuery("SELECT LAST_INSERT_ID()");
+    var query = entityManager.createNativeQuery(
+        "SELECT value FROM resource_id WHERE id = :id")
+        .setParameter("id", id);
+
     return ((BigInteger) query.getSingleResult()).longValue();
   }
 }
