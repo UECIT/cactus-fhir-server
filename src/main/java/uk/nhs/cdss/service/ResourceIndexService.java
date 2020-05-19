@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.CarePlan;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.Reference;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,10 @@ public class ResourceIndexService {
       }
   );
 
+  private static final Map<Class<?>, Function<Object, String>> stringers = Map.of(
+      Reference.class, o -> ((Reference) o).getReference()
+  );
+
   @SuppressWarnings("rawtypes")
   Map<String, String> extractFields(Resource resource) {
     Map<String, String> fields = new HashMap<>();
@@ -62,30 +67,31 @@ public class ResourceIndexService {
 
     resourceIndexRepository.saveAll(
         fields.entrySet().stream()
-            .map(entry -> {
-              var field = new ResourceIndex();
-              field.setType(entity.getResourceType());
-              field.setPath(entry.getKey());
-              field.setValue(entry.getValue());
-              field.setResourceId(id);
-              return field;
-            })::iterator);
+            .map(entry -> ResourceIndex.builder()
+                .supplierId(entity.getSupplierId())
+                .type(entity.getResourceType())
+                .path(entry.getKey())
+                .value(entry.getValue())
+                .resourceId(id)
+                .build())
+            ::iterator);
   }
 
-  public <T extends Resource> SearchByType<T> search(Class<T> type) {
-    return new SearchByType<>(type);
+  public <T extends Resource> SearchByType<T> search(String supplierId, Class<T> type) {
+    return new SearchByType<>(supplierId, type);
   }
 
   @AllArgsConstructor
   public class SearchByType<T extends Resource> {
 
+    private final String supplierId;
     private final Class<T> type;
 
     public Collection<T> eq(String path, String value) {
 
       List<ResourceIndex> matches = resourceIndexRepository
-          .findAllByTypeEqualsAndPathEqualsAndValueEquals(
-              ResourceUtil.getResourceType(type), path, value);
+          .findAllBySupplierIdEqualsAndTypeEqualsAndPathEqualsAndValueEquals(
+              supplierId, ResourceUtil.getResourceType(type), path, value);
 
       if (matches.isEmpty()) {
         return Collections.emptyList();
@@ -113,7 +119,13 @@ public class ResourceIndexService {
       String path, Function<R, T> extractor) {
     return (r, fields) -> {
       T value = extractor.apply(r);
-      fields.put(path, value == null ? null : value.toString());
+      if (value == null) {
+        fields.put(path, null);
+      } else {
+        Function<Object, String> stringer = stringers
+            .getOrDefault(value.getClass(), Object::toString);
+        fields.put(path, stringer.apply(value));
+      }
     };
   }
 }

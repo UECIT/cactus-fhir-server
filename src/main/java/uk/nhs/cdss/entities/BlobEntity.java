@@ -16,7 +16,10 @@ import lombok.NoArgsConstructor;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class BlobEntity extends SupplierPartitioned {
+public class BlobEntity {
+
+  @Column(name="supplierId")
+  private String supplierId;
 
   @Id
   private String id;

@@ -12,9 +12,11 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hl7.fhir.dstu3.model.ResourceType;
 
 @Entity
@@ -23,7 +25,10 @@ import org.hl7.fhir.dstu3.model.ResourceType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "resource_versioned")
-public class ResourceEntity extends SupplierPartitioned {
+public class ResourceEntity {
+
+	@Column(name="supplierId")
+	private String supplierId;
 
 	@EmbeddedId
 	private IdVersion idVersion;

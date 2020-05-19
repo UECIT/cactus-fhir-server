@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.mockito.Mockito.when;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
@@ -29,6 +30,7 @@ import uk.nhs.cdss.entities.ResourceIndex;
 import uk.nhs.cdss.fixtures.CarePlanFixtures;
 import uk.nhs.cdss.repos.ResourceIndexRepository;
 import uk.nhs.cdss.repos.ResourceRepository;
+import uk.nhs.cdss.service.ResourceService;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
@@ -39,37 +41,20 @@ public class CarePlanProviderComponentTest {
   private CarePlanProvider carePlanProvider;
 
   @Autowired
-  private IParser fhirParser;
+  private ResourceService resourceService;
 
-  @MockBean
-  private ResourceRepository resourceRepository;
-
-  @MockBean
-  private ResourceIndexRepository resourceIndexRepository;
+  @Autowired
+  private FhirContext fhirContext;
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
+  private final static String SUPPLIER_ID = "";
+
   @Test
   public void findsCarePlan() {
     CarePlan expected = CarePlanFixtures.carePlan();
-    ResourceEntity resourceEntity = ResourceEntity.builder()
-        .resourceType(ResourceType.CarePlan)
-        .idVersion(new IdVersion(1L, 1L))
-        .resourceJson(fhirParser.encodeResourceToString(expected))
-        .build();
-
-    ResourceIndex resourceIndex = new ResourceIndex();
-    resourceIndex.setType(ResourceType.CarePlan);
-    resourceIndex.setPath(CarePlan.SP_CONTEXT);
-    resourceIndex.setValue("Encounter/2");
-    resourceIndex.setResourceId(1L);
-
-    when(resourceIndexRepository.findAllByTypeEqualsAndPathEqualsAndValueEquals(
-        ResourceType.CarePlan, CarePlan.SP_CONTEXT, "Encounter/2"))
-        .thenReturn(List.of(resourceIndex));
-    when(resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(1L))
-        .thenReturn(Optional.of(resourceEntity));
+    resourceService.save(SUPPLIER_ID, expected);
 
     Collection<CarePlan> results = carePlanProvider
         .findByEncounterContext(referenceParam(expected));

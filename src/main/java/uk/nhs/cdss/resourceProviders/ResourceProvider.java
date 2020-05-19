@@ -27,13 +27,15 @@ public class ResourceProvider implements IResourceProvider {
 
   @Create
   public MethodOutcome createResource(@ResourceParam Resource resource) {
-    return new MethodOutcome(new IdType(resourceService.save(resource).getIdVersion().getId()), true);
+    String supplierId = ""; // TODO get from Auth header
+    return new MethodOutcome(new IdType(resourceService.save(supplierId, resource).getIdVersion().getId()), true);
   }
 
   @Update
   public MethodOutcome updateResource(@ResourceParam Resource resource) {
+    String supplierId = ""; // TODO get from Auth header
     ResourceEntity updated = resourceService
-        .update(resource.getIdElement().getIdPartAsLong(), resource);
+        .update(supplierId, resource.getIdElement().getIdPartAsLong(), resource);
     return new MethodOutcome(new IdType(
         resource.getResourceType().name(),
         updated.getIdVersion().getId().toString(), updated.getIdVersion().getVersion().toString()));

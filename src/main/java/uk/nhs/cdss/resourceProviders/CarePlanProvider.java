@@ -5,7 +5,6 @@ import ca.uhn.fhir.rest.annotation.Search;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
-import java.util.Arrays;
 import java.util.Collection;
 import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.CarePlan;
@@ -23,15 +22,16 @@ public class CarePlanProvider implements IResourceProvider {
   private ResourceIndexService resourceIndexService;
 
   @Search
-  public Collection<CarePlan> findByEncounterContext(@RequiredParam(name= CarePlan.SP_CONTEXT)
-      ReferenceParam contextParam) {
+  public Collection<CarePlan> findByEncounterContext(
+      @RequiredParam(name = CarePlan.SP_CONTEXT) ReferenceParam contextParam) {
 
+    String supplierId = ""; // TODO get from Auth header
     String resourceType = contextParam.getResourceType();
     if (resourceType != null && !resourceType.equals(ResourceType.Encounter.name())) {
       throw new InvalidRequestException("Resource type for 'context' must be 'Encounter'");
     }
 
-    return resourceIndexService.search(CarePlan.class)
+    return resourceIndexService.search(supplierId, CarePlan.class)
         .eq(CarePlan.SP_CONTEXT, contextParam.getValue());
   }
 

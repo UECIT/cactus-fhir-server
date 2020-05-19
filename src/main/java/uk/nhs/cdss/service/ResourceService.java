@@ -1,6 +1,7 @@
 package uk.nhs.cdss.service;
 
-import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +28,7 @@ public class ResourceService {
   private final ResourceRepository resourceRepository;
   private final ResourceIdService resourceIdService;
   private final ResourceIndexService resourceIndexService;
-  private final IParser fhirParser;
+  private final FhirContext fhirContext;
 
   @AllArgsConstructor(access = AccessLevel.PRIVATE)
   public class GetBy<T extends IBaseResource> {
@@ -39,6 +40,7 @@ public class ResourceService {
     }
 
     public List<T> by(List<Predicate<T>> conditions) {
+      var fhirParser = fhirContext.newJsonParser();
       var resourceStream = ResourceService.this.getAllOfType(type).stream()
           .map(res -> ResourceUtil.parseResource(res, type, fhirParser))
           .filter(Objects::nonNull)
@@ -62,6 +64,7 @@ public class ResourceService {
         .orElseThrow(() ->
             new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
 
+    var fhirParser = fhirContext.newJsonParser();
     return ResourceUtil.parseResource(resource, clazz, fhirParser);
   }
 
@@ -75,10 +78,13 @@ public class ResourceService {
   }
 
   @Transactional
-  public ResourceEntity save(Resource resource) {
+  public ResourceEntity save(String supplierId, Resource resource) {
     var idVersion = new IdVersion(resourceIdService.nextId(), 1L);
 
+    var fhirParser = fhirContext.newJsonParser();
+
     ResourceEntity resourceEntity = ResourceEntity.builder()
+        .supplierId(supplierId)
         .idVersion(idVersion)
         .resourceType(resource.getResourceType())
         .resourceJson(fhirParser.encodeResourceToString(resource))
@@ -90,16 +96,20 @@ public class ResourceService {
   }
 
   @Transactional
-  public ResourceEntity update(Long id, Resource resource) {
-    var updated = resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
-        .map(entity -> updateRecord(entity, resource))
+  public ResourceEntity update(String supplierId, Long id, Resource resource) {
+    ResourceEntity entity = resourceRepository
+        .findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
         .orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
 
+    if (!Objects.equals(supplierId, entity.getSupplierId())) {
+      throw new AuthenticationException();
+    }
 
+    ResourceEntity updated = updateRecord(entity, resource);
     updated = resourceRepository.save(updated);
-		resourceIndexService.update(resource, updated);
+    resourceIndexService.update(resource, updated);
 
-		return updated;
+    return updated;
   }
 
   private ResourceEntity updateRecord(ResourceEntity entity, Resource newResource) {
@@ -107,7 +117,9 @@ public class ResourceService {
     Long currentVersion = entity.getIdVersion().getVersion();
     Long id = entity.getIdVersion().getId();
 
-    return ResourceEntity.builder()
+    var fhirParser = fhirContext.newJsonParser();
+
+    return entity.toBuilder()
         .resourceJson(fhirParser.encodeResourceToString(newResource))
         .resourceType(entity.getResourceType())
         .idVersion(new IdVersion(id, currentVersion + 1L))

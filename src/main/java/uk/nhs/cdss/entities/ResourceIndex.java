@@ -1,5 +1,6 @@
 package uk.nhs.cdss.entities;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
@@ -18,9 +19,12 @@ import org.hl7.fhir.dstu3.model.ResourceType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "resource_index", indexes = {
-    @Index(columnList = "type,path,value")
+    @Index(columnList = "supplierId,type,path,value")
 })
 public class ResourceIndex {
+
+  @Column(name="supplierId")
+  private String supplierId;
 
   @Id
   @GeneratedValue

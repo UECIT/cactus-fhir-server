@@ -36,6 +36,8 @@ public class IndexComponentTest extends TestCase {
   @Autowired
   FhirContext fhirContext;
 
+  private final static String SUPPLIER_ID = "supplier_x";
+
   @Before
   public void reset() {
     resourceRepository.deleteAll();
@@ -47,10 +49,11 @@ public class IndexComponentTest extends TestCase {
     Patient patient = new Patient();
     patient.setGender(AdministrativeGender.FEMALE);
 
-    ResourceEntity entity = resourceService.save(patient);
+    ResourceEntity entity = resourceService.save(SUPPLIER_ID, patient);
 
     List<ResourceIndex> femalePatients = resourceIndexRepository
-        .findAllByTypeEqualsAndPathEqualsAndValueEquals(ResourceType.Patient, "gender", "FEMALE");
+        .findAllBySupplierIdEqualsAndTypeEqualsAndPathEqualsAndValueEquals(
+            SUPPLIER_ID, ResourceType.Patient, "gender", "FEMALE");
 
     assertEquals("Single patient expected", 1, femalePatients.size());
     assertEquals("Patient ID should match", entity.getIdVersion().getId(),
@@ -62,19 +65,21 @@ public class IndexComponentTest extends TestCase {
     Patient patient = new Patient();
     patient.setGender(AdministrativeGender.FEMALE);
 
-    ResourceEntity entity = resourceService.save(patient);
+    ResourceEntity entity = resourceService.save(SUPPLIER_ID, patient);
 
     patient.setGender(AdministrativeGender.MALE);
-    resourceService.update(entity.getIdVersion().getId(), patient);
+    resourceService.update(SUPPLIER_ID, entity.getIdVersion().getId(), patient);
 
     // Old index entry should be removed
     List<ResourceIndex> femalePatients = resourceIndexRepository
-        .findAllByTypeEqualsAndPathEqualsAndValueEquals(ResourceType.Patient, "gender", "FEMALE");
+        .findAllBySupplierIdEqualsAndTypeEqualsAndPathEqualsAndValueEquals(
+            SUPPLIER_ID, ResourceType.Patient, "gender", "FEMALE");
     assertEquals("No female patients expected", 0, femalePatients.size());
 
     // Patient should now be listed as male
     List<ResourceIndex> malePatients = resourceIndexRepository
-        .findAllByTypeEqualsAndPathEqualsAndValueEquals(ResourceType.Patient, "gender", "MALE");
+        .findAllBySupplierIdEqualsAndTypeEqualsAndPathEqualsAndValueEquals(
+            SUPPLIER_ID, ResourceType.Patient, "gender", "MALE");
 
     assertEquals("Single male patient expected", 1, malePatients.size());
     assertEquals("Patient ID should match", entity.getIdVersion().getId(),
