@@ -2,15 +2,11 @@ package uk.nhs.cdss.resourceProviders;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.mockito.Mockito.when;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 import org.hamcrest.CustomTypeSafeMatcher;
 import org.hamcrest.Matcher;
 import org.hl7.fhir.dstu3.model.CarePlan;
@@ -21,15 +17,9 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.nhs.cdss.entities.ResourceEntity;
-import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
-import uk.nhs.cdss.entities.ResourceIndex;
 import uk.nhs.cdss.fixtures.CarePlanFixtures;
-import uk.nhs.cdss.repos.ResourceIndexRepository;
-import uk.nhs.cdss.repos.ResourceRepository;
 import uk.nhs.cdss.service.ResourceService;
 
 @SpringBootTest
@@ -43,18 +33,13 @@ public class CarePlanProviderComponentTest {
   @Autowired
   private ResourceService resourceService;
 
-  @Autowired
-  private FhirContext fhirContext;
-
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
-
-  private final static String SUPPLIER_ID = "";
 
   @Test
   public void findsCarePlan() {
     CarePlan expected = CarePlanFixtures.carePlan();
-    resourceService.save(SUPPLIER_ID, expected);
+    resourceService.save(expected);
 
     Collection<CarePlan> results = carePlanProvider
         .findByEncounterContext(referenceParam(expected));

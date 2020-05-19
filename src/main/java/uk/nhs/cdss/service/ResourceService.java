@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -64,27 +63,28 @@ public class ResourceService {
         .orElseThrow(() ->
             new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
 
+    // TODO check supplierId
+
     var fhirParser = fhirContext.newJsonParser();
     return ResourceUtil.parseResource(resource, clazz, fhirParser);
   }
 
   @Transactional
   public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
-    return resourceRepository.findAll()
-        .stream().parallel()
-        .filter(resourceEntity -> resourceEntity.getResourceType()
-            .equals(ResourceUtil.getResourceType(clazz)))
-        .collect(Collectors.toList());
+    return resourceRepository.findAllBySupplierIdEqualsAndResourceTypeEquals(
+        null, // TODO
+        ResourceUtil.getResourceType(clazz)
+    );
   }
 
   @Transactional
-  public ResourceEntity save(String supplierId, Resource resource) {
+  public ResourceEntity save(Resource resource) {
     var idVersion = new IdVersion(resourceIdService.nextId(), 1L);
 
     var fhirParser = fhirContext.newJsonParser();
 
     ResourceEntity resourceEntity = ResourceEntity.builder()
-        .supplierId(supplierId)
+        .supplierId(null) // TODO
         .idVersion(idVersion)
         .resourceType(resource.getResourceType())
         .resourceJson(fhirParser.encodeResourceToString(resource))
@@ -96,11 +96,12 @@ public class ResourceService {
   }
 
   @Transactional
-  public ResourceEntity update(String supplierId, Long id, Resource resource) {
+  public ResourceEntity update(Long id, Resource resource) {
     ResourceEntity entity = resourceRepository
         .findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
         .orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
 
+    String supplierId = null; // TODO
     if (!Objects.equals(supplierId, entity.getSupplierId())) {
       throw new AuthenticationException();
     }

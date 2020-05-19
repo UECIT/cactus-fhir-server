@@ -110,7 +110,7 @@ public class ResourceServiceTest {
         .ignoring("idVersion"))))
         .thenReturn(carePlanEntity);
 
-    ResourceEntity savedCarePlanEntity = resourceService.save("", carePlan);
+    ResourceEntity savedCarePlanEntity = resourceService.save(carePlan);
 
     assertThat(savedCarePlanEntity, is(carePlanEntity));
   }
@@ -126,7 +126,7 @@ public class ResourceServiceTest {
         .ignoring("idVersion"))))
         .thenReturn(carePlanEntity);
 
-    ResourceEntity savedCarePlanEntity = resourceService.save("", carePlan);
+    ResourceEntity savedCarePlanEntity = resourceService.save(carePlan);
 
     assertThat(savedCarePlanEntity, is(carePlanEntity));
   }

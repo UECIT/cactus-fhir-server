@@ -28,7 +28,7 @@ public class BlobEntity {
   private String contentType;
 
   @Column(name = "resource_data")
-	@Lob()
+  @Lob()
   private byte[] resourceData;
 
 }

@@ -2,71 +2,62 @@ package uk.nhs.cdss.service;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import org.hl7.fhir.dstu3.model.CarePlan;
-import org.hl7.fhir.dstu3.model.Patient;
-import org.hl7.fhir.dstu3.model.Reference;
+import lombok.RequiredArgsConstructor;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceIndex;
 import uk.nhs.cdss.repos.ResourceIndexRepository;
 import uk.nhs.cdss.repos.ResourceRepository;
+import uk.nhs.cdss.service.index.Extractor;
 import uk.nhs.cdss.util.ResourceUtil;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ResourceIndexService {
 
   private final ResourceIndexRepository resourceIndexRepository;
   private final ResourceRepository resourceRepository;
   private final FhirContext fhirContext;
 
-  // Field extraction ==================
-  private static final FieldExtractor<?>[] EMPTY = {};
+  private final Multimap<ResourceType, Extractor<?>> extractors = HashMultimap.create();
 
-  private static final Map<ResourceType, FieldExtractor<?>[]> fieldExtractors = Map.of(
-      ResourceType.CarePlan, new FieldExtractor<?>[]{
-          extract(CarePlan.SP_CONTEXT, CarePlan::getContext)
-      },
-      ResourceType.Patient, new FieldExtractor<?>[]{
-          extract(Patient.SP_GENDER, Patient::getGender)
-      }
-  );
+  @Autowired
+  public void configFieldExtractors(List<Extractor<?>> extractors) {
+    for (Extractor<?> extractor : extractors) {
+      this.extractors.put(extractor.getResourceType(), extractor);
+    }
+  }
 
-  private static final Map<Class<?>, Function<Object, String>> stringers = Map.of(
-      Reference.class, o -> ((Reference) o).getReference()
-  );
-
-  @SuppressWarnings("rawtypes")
-  Map<String, String> extractFields(Resource resource) {
-    Map<String, String> fields = new HashMap<>();
+  <T extends Resource> Multimap<String, String> extractFields(T resource) {
+    Multimap<String, String> fields = HashMultimap.create();
     ResourceType resourceType = resource.getResourceType();
-    for (FieldExtractor ex : fieldExtractors.getOrDefault(resourceType, EMPTY)) {
-      ex.extract(resource, fields);
+    for (Extractor ex : extractors.get(resourceType)) {
+      fields.putAll(ex.extract(resource));
     }
     return fields;
   }
 
   public void update(Resource resource, ResourceEntity entity) {
 
-    Map<String, String> fields = extractFields(resource);
+    Multimap<String, String> fields = extractFields(resource);
 
     // TODO mark old fields as archived
     Long id = entity.getIdVersion().getId();
     resourceIndexRepository.deleteAllByResourceId(id);
 
     resourceIndexRepository.saveAll(
-        fields.entrySet().stream()
+        fields.entries().stream()
             .map(entry -> ResourceIndex.builder()
                 .supplierId(entity.getSupplierId())
                 .type(entity.getResourceType())
@@ -87,7 +78,7 @@ public class ResourceIndexService {
     private final String supplierId;
     private final Class<T> type;
 
-    public Collection<T> eq(String path, String value) {
+    public List<T> eq(String path, String value) {
 
       List<ResourceIndex> matches = resourceIndexRepository
           .findAllBySupplierIdEqualsAndTypeEqualsAndPathEqualsAndValueEquals(
@@ -107,25 +98,5 @@ public class ResourceIndexService {
           .map(entity -> jsonParser.parseResource(type, entity.getResourceJson()))
           .collect(Collectors.toList());
     }
-  }
-
-
-  private interface FieldExtractor<R extends Resource> {
-
-    void extract(R resource, Map<String, String> fields);
-  }
-
-  private static <R extends Resource, T> FieldExtractor<R> extract(
-      String path, Function<R, T> extractor) {
-    return (r, fields) -> {
-      T value = extractor.apply(r);
-      if (value == null) {
-        fields.put(path, null);
-      } else {
-        Function<Object, String> stringer = stringers
-            .getOrDefault(value.getClass(), Object::toString);
-        fields.put(path, stringer.apply(value));
-      }
-    };
   }
 }

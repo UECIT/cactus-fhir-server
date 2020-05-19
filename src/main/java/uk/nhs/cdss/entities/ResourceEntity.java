@@ -12,11 +12,8 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.experimental.SuperBuilder;
 import org.hl7.fhir.dstu3.model.ResourceType;
 
 @Entity
@@ -24,31 +21,34 @@ import org.hl7.fhir.dstu3.model.ResourceType;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "resource_versioned")
+@Table(name = "resource_versioned", indexes = {
+    @Index(columnList = "supplierId,resource_type")
+})
 public class ResourceEntity {
 
-	@Column(name="supplierId")
-	private String supplierId;
+  @Column(name = "supplierId")
+  private String supplierId;
 
-	@EmbeddedId
-	private IdVersion idVersion;
-	
-	@Enumerated
-	@Column(name = "resource_type")
-	private ResourceType resourceType;
-	
-	@Column(name = "resource_json")
-	@Setter
-	@Lob
-	private String resourceJson;
+  @EmbeddedId
+  private IdVersion idVersion;
 
-	@Data
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Embeddable
-	public static class IdVersion implements Serializable {
-		private Long id;
-		private Long version;
-	}
+  @Enumerated
+  @Column(name = "resource_type")
+  private ResourceType resourceType;
+
+  @Column(name = "resource_json")
+  @Setter
+  @Lob
+  private String resourceJson;
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Embeddable
+  public static class IdVersion implements Serializable {
+
+    private Long id;
+    private Long version;
+  }
 
 }

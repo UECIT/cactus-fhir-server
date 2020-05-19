@@ -1,6 +1,6 @@
 package uk.nhs.cdss.service;
 
-import java.util.Map;
+import com.google.common.collect.Multimap;
 import junit.framework.TestCase;
 import org.hl7.fhir.dstu3.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.dstu3.model.Patient;
@@ -25,17 +25,17 @@ public class ResourceIndexServiceTest extends TestCase {
     Patient patient = new Patient();
     patient.setGender(AdministrativeGender.FEMALE);
 
-    Map<String, String> fields = resourceIndexService.extractFields(patient);
+    Multimap<String, String> fields = resourceIndexService.extractFields(patient);
 
-    assertEquals("FEMALE", fields.get(Patient.SP_GENDER));
+    assertEquals("FEMALE", fields.get(Patient.SP_GENDER).iterator().next());
   }
 
   @Test
   public void testExtractMissingFields() {
     Patient patient = new Patient();
 
-    Map<String, String> fields = resourceIndexService.extractFields(patient);
+    Multimap<String, String> fields = resourceIndexService.extractFields(patient);
 
-    assertNull(fields.get(Patient.SP_GENDER));
+    assertTrue(fields.containsKey(Patient.SP_GENDER));
   }
 }
