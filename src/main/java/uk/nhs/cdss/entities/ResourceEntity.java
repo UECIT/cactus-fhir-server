@@ -23,7 +23,7 @@ import org.hl7.fhir.dstu3.model.ResourceType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "resource_versioned")
-public class ResourceEntity {
+public class ResourceEntity extends SupplierPartitioned {
 
 	@EmbeddedId
 	private IdVersion idVersion;
