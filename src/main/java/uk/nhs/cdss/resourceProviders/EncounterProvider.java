@@ -8,26 +8,21 @@ import ca.uhn.fhir.rest.annotation.Search;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleType;
 import org.hl7.fhir.dstu3.model.Encounter;
-import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Component;
-import uk.nhs.cdss.entities.ResourceIndex;
 import uk.nhs.cdss.service.EncounterReportService;
 import uk.nhs.cdss.service.ResourceIndexService;
 import uk.nhs.cdss.service.ResourceService;
 import uk.nhs.cdss.service.index.EncounterExtractor;
-import uk.nhs.cdss.service.index.PatientExtractor;
-import uk.nhs.cdss.util.RetryUtils;
+import uk.nhs.cdss.service.index.IndexMappers;
 
 @Component
 @RequiredArgsConstructor
@@ -45,10 +40,9 @@ public class EncounterProvider implements IResourceProvider {
 
     TokenParam identifierParam = param.toTokenParam(context);
 
-    // TODO check string format of identifier is to spec
     return resourceIndexService.search(Encounter.class)
         .eq(EncounterExtractor.PATIENT_IDENTIFIER,
-            identifierParam.getSystem() + "|" + identifierParam.getValue());
+            IndexMappers.mapCoding(identifierParam.getSystem(), identifierParam.getValue()));
   }
 
   @Search

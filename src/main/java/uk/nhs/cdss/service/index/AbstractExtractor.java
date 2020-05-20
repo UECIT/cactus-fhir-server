@@ -19,8 +19,7 @@ public abstract class AbstractExtractor<T extends DomainResource> implements Ext
       Reference.class, o -> ((Reference) o).getReference(),
       Identifier.class, o -> {
         Identifier identifier = (Identifier) o;
-        // TODO check this matches the spec for identifiers
-        return String.format("%s|%s", identifier.getSystem(), identifier.getValue());
+        return IndexMappers.mapCoding(identifier.getSystem(), identifier.getValue());
       }
   );
 

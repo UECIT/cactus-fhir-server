@@ -18,9 +18,9 @@ import uk.nhs.cdss.service.ResourceService;
 @AllArgsConstructor
 public class ResourceProvider implements IResourceProvider {
 
-  private ResourceService resourceService;
-  private ResourceLookupService resourceLookupService;
-  private Class<? extends Resource> classResource;
+  private final ResourceService resourceService;
+  private final ResourceLookupService resourceLookupService;
+  private final Class<? extends Resource> classResource;
 
   @Read(version = true)
   public IBaseResource getResourceById(@IdParam IdType id) {
@@ -30,13 +30,11 @@ public class ResourceProvider implements IResourceProvider {
 
   @Create
   public MethodOutcome createResource(@ResourceParam Resource resource) {
-    String supplierId = ""; // TODO CDSCT-139 get from Auth header
     return new MethodOutcome(new IdType(resourceService.save(resource).getIdVersion().getId()), true);
   }
 
   @Update
   public MethodOutcome updateResource(@ResourceParam Resource resource) {
-    String supplierId = ""; // TODO CDSCT-139 get from Auth header
     ResourceEntity updated = resourceService
         .update(resource.getIdElement().getIdPartAsLong(), resource);
     return new MethodOutcome(new IdType(
