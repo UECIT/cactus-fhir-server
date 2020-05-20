@@ -9,7 +9,7 @@ import uk.nhs.cdss.entities.ResourceIndex;
 @Repository
 public interface ResourceIndexRepository extends JpaRepository<ResourceIndex, Long> {
 
-  List<ResourceIndex> findAllBySupplierIdEqualsAndTypeEqualsAndPathEqualsAndValueEquals(
+  List<ResourceIndex> findAllBySupplierIdEqualsAndResourceTypeEqualsAndPathEqualsAndValueEquals(
       String supplierId, ResourceType type, String path, String value);
 
   void deleteAllByResourceId(long resourceId);

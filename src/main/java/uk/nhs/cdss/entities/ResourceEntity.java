@@ -18,16 +18,11 @@ import org.hl7.fhir.dstu3.model.ResourceType;
 
 @Entity
 @Data
-@Builder(toBuilder = true)
 @NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "resource_versioned", indexes = {
     @Index(columnList = "supplierId,resource_type")
 })
-public class ResourceEntity {
-
-  @Column(name = "supplierId")
-  private String supplierId;
+public class ResourceEntity extends SupplierPartitioned {
 
   @EmbeddedId
   private IdVersion idVersion;
@@ -51,4 +46,11 @@ public class ResourceEntity {
     private Long version;
   }
 
+  @Builder(toBuilder = true)
+  public ResourceEntity(IdVersion idVersion, String supplierId, ResourceType resourceType, String resourceJson) {
+    super(supplierId);
+    this.idVersion = idVersion;
+    this.resourceType = resourceType;
+    this.resourceJson = resourceJson;
+  }
 }

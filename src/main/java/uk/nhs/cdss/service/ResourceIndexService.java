@@ -59,7 +59,7 @@ public class ResourceIndexService {
         fields.entries().stream()
             .map(entry -> ResourceIndex.builder()
                 .supplierId(entity.getSupplierId())
-                .type(entity.getResourceType())
+                .resourceType(entity.getResourceType())
                 .path(entry.getKey())
                 .value(entry.getValue())
                 .resourceId(id)
@@ -81,7 +81,7 @@ public class ResourceIndexService {
     public List<T> eq(String path, String value) {
 
       List<ResourceIndex> matches = resourceIndexRepository
-          .findAllBySupplierIdEqualsAndTypeEqualsAndPathEqualsAndValueEquals(
+          .findAllBySupplierIdEqualsAndResourceTypeEqualsAndPathEqualsAndValueEquals(
               supplierId, ResourceUtil.getResourceType(type), path, value);
 
       if (matches.isEmpty()) {

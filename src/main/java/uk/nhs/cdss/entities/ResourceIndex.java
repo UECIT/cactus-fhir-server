@@ -15,16 +15,11 @@ import org.hl7.fhir.dstu3.model.ResourceType;
 
 @Entity
 @Data
-@Builder(toBuilder = true)
 @NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "resource_index", indexes = {
-    @Index(columnList = "supplierId,type,path,value")
+    @Index(columnList = "supplierId,resource_type,path,value")
 })
-public class ResourceIndex {
-
-  @Column(name="supplierId")
-  private String supplierId;
+public class ResourceIndex extends SupplierPartitioned {
 
   @Id
   @GeneratedValue
@@ -33,7 +28,19 @@ public class ResourceIndex {
   private Long resourceId;
 
   @Enumerated
-  private ResourceType type;
+  @Column(name = "resource_type")
+  private ResourceType resourceType;
+
   private String path;
   private String value;
+
+  @Builder(toBuilder = true)
+  public ResourceIndex(Long id, String supplierId, Long resourceId, ResourceType resourceType, String path, String value) {
+    super(supplierId);
+    this.id = id;
+    this.resourceId = resourceId;
+    this.resourceType = resourceType;
+    this.path = path;
+    this.value = value;
+  }
 }
