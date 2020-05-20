@@ -64,7 +64,7 @@ public class ResourceLookupService {
         .orElseThrow(() ->
             new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
 
-    // TODO check supplierId
+    // TODO CDSCT-139 check supplierId
 
     var fhirParser = fhirContext.newJsonParser();
     return ResourceUtil.parseResource(resource, clazz, fhirParser);

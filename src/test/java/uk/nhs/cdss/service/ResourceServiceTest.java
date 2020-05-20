@@ -136,8 +136,8 @@ public class ResourceServiceTest {
 
   private ResourceEntity validCarePlanEntity() {
     return ResourceEntity.builder()
-        .supplierId("")
-        .idVersion(new IdVersion(1L, 1L))
+        .supplierId(null) // TODO CDSCT-139
+        .idVersion(new IdVersion(0L, 1L))
         .resourceType(ResourceType.CarePlan)
         .resourceJson(
             "{\"resourceType\":\"CarePlan\","
@@ -157,7 +157,7 @@ public class ResourceServiceTest {
         "<div xmlns=\\\"http://www.w3.org/1999/xhtml\\\">After Care Instructions</div>");
 
     CarePlan carePlan = new CarePlan();
-    carePlan.setId(new IdType(1L).withVersion("1"));
+    carePlan.setId(new IdType(0L).withVersion("1"));
     carePlan.setTitle("Self care");
     carePlan.setIntent(CarePlanIntent.OPTION);
     carePlan.setStatus(CarePlanStatus.ACTIVE);
