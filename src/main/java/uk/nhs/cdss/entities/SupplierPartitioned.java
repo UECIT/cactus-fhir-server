@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 @MappedSuperclass
 @NoArgsConstructor
 @AllArgsConstructor
-public class SupplierPartitioned {
+public abstract class SupplierPartitioned {
 
   @Column(name = "supplierId")
-  String supplierId;
+  protected String supplierId;
 
 }
