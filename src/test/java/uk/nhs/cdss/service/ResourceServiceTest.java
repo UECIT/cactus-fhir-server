@@ -36,6 +36,9 @@ public class ResourceServiceTest {
   @InjectMocks
   private ResourceService resourceService;
 
+  @InjectMocks
+  private ResourceLookupService resourceLookupService;
+
   @Mock
   private ResourceRepository resourceRepository;
 
@@ -69,7 +72,7 @@ public class ResourceServiceTest {
     when(parser.parseResource(CarePlan.class, carePlanEntity.getResourceJson()))
         .thenReturn(carePlan);
 
-    IBaseResource returnedResource = resourceService.getResource(1L, null, CarePlan.class);
+    IBaseResource returnedResource = resourceLookupService.getResource(1L, null, CarePlan.class);
 
     assertThat(returnedResource, is(carePlan));
   }
@@ -84,7 +87,7 @@ public class ResourceServiceTest {
     when(parser.parseResource(CarePlan.class, carePlanEntity.getResourceJson()))
         .thenReturn(carePlan);
 
-    IBaseResource returnedResource = resourceService.getResource(1L, 1L, CarePlan.class);
+    IBaseResource returnedResource = resourceLookupService.getResource(1L, 1L, CarePlan.class);
 
     assertThat(returnedResource, is(carePlan));
   }
@@ -96,7 +99,7 @@ public class ResourceServiceTest {
 
     expectedException.expect(ResourceNotFoundException.class);
 
-    resourceService.getResource(1L, 1L, CarePlan.class);
+    resourceLookupService.getResource(1L, 1L, CarePlan.class);
   }
 
   @Test

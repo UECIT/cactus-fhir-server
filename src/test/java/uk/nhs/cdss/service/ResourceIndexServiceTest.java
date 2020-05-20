@@ -1,15 +1,18 @@
 package uk.nhs.cdss.service;
 
 import com.google.common.collect.Multimap;
+import java.util.List;
 import junit.framework.TestCase;
 import org.hl7.fhir.dstu3.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.nhs.cdss.repos.ResourceIndexRepository;
+import uk.nhs.cdss.service.index.PatientExtractor;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ResourceIndexServiceTest extends TestCase {
@@ -19,6 +22,12 @@ public class ResourceIndexServiceTest extends TestCase {
 
   @InjectMocks
   ResourceIndexService resourceIndexService;
+
+  @Override
+  @Before
+  public void setUp() {
+    resourceIndexService.configFieldExtractors(List.of(new PatientExtractor()));
+  }
 
   @Test
   public void testExtractFields() {
@@ -36,6 +45,7 @@ public class ResourceIndexServiceTest extends TestCase {
 
     Multimap<String, String> fields = resourceIndexService.extractFields(patient);
 
-    assertTrue(fields.containsKey(Patient.SP_GENDER));
+    assertTrue("Should contain a field for gender with null value",
+        fields.containsKey(Patient.SP_GENDER));
   }
 }

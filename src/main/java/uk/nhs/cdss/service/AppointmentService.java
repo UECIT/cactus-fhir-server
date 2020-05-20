@@ -12,10 +12,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AppointmentService {
 
-  private final ResourceService resourceService;
+  private final ResourceLookupService resourceLookupService;
 
   public List<Appointment> getByReferrals(List<String> referralRequestRefs) {
-    return resourceService.get(Appointment.class)
+    return resourceLookupService.get(Appointment.class)
         .by(asList(
             Appointment::hasIncomingReferral,
             app -> app.getIncomingReferral().stream()

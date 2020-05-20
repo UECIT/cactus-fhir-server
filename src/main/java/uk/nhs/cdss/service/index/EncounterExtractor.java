@@ -2,7 +2,6 @@ package uk.nhs.cdss.service.index;
 
 import ca.uhn.fhir.context.FhirContext;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Encounter;
@@ -12,8 +11,7 @@ import org.hl7.fhir.dstu3.model.Reference;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.springframework.stereotype.Component;
-import uk.nhs.cdss.entities.ResourceEntity;
-import uk.nhs.cdss.repos.ResourceRepository;
+import uk.nhs.cdss.service.ResourceLookupService;
 
 @Component
 @RequiredArgsConstructor
@@ -24,7 +22,7 @@ public class EncounterExtractor extends AbstractExtractor<Encounter> {
       Encounter.SP_PATIENT + "." + Patient.SP_IDENTIFIER;
 
   private final FhirContext context;
-  private final ResourceRepository resourceRepository;
+  private final ResourceLookupService resourceLookupService;
 
   @Extract(PATIENT_IDENTIFIER)
   public List<Identifier> patientIdentifier(Encounter encounter) {
@@ -36,17 +34,11 @@ public class EncounterExtractor extends AbstractExtractor<Encounter> {
 
     Patient patient = null;
     try {
-      // TODO use supplierID and necessary auth to fetch patient resource
+      // TODO CDSCT-139 use supplierID and necessary auth to fetch patient resource
       IIdType id = subject.getReferenceElement();
       String baseUrl = id.getBaseUrl();
       if (baseUrl == null) {
-        Optional<ResourceEntity> entity = resourceRepository
-            .findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id.getIdPartAsLong());
-        patient = entity
-            .filter(e -> e.getSupplierId() == null) // TODO
-            .map(e -> context.newJsonParser().parseResource(e.getResourceJson()))
-            .map(Patient.class::cast)
-            .orElse(null);
+        patient = resourceLookupService.getResource(id.getIdPartAsLong(), null, Patient.class);
       } else {
         patient = context.newRestfulGenericClient(baseUrl)
             .read()

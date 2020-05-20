@@ -30,12 +30,13 @@ import org.springframework.stereotype.Service;
 public class EncounterReportService {
 
   private final ResourceService resourceService;
+  private final ResourceLookupService resourceLookupService;
   private final ReferenceService referenceService;
   private final AppointmentService appointmentService;
   private final GenericResourceLocator resourceLocator;
 
   public String addEncounter(Bundle bundle, long encounterId) {
-    Encounter encounter = (Encounter) resourceService.getResource(
+    Encounter encounter = (Encounter) resourceLookupService.getResource(
         encounterId,
         null, //We can never specify version in a search with ID, find most recent by default.
         Encounter.class);
@@ -61,7 +62,7 @@ public class EncounterReportService {
   }
 
   public void addReferralRequests(Bundle bundle, String encounterId) {
-    List<ReferralRequest> referralRequests = resourceService.get(ReferralRequest.class)
+    List<ReferralRequest> referralRequests = resourceLookupService.get(ReferralRequest.class)
         .by(asList(
             ReferralRequest::hasContext,
             rr -> rr.getContext().getReference().equals(encounterId)
@@ -89,7 +90,7 @@ public class EncounterReportService {
   }
 
   public void addCarePlans(Bundle bundle, String encounterId) {
-    resourceService.get(CarePlan.class)
+    resourceLookupService.get(CarePlan.class)
         .by(asList(
             CarePlan::hasContext,
             cp -> cp.getContext().getReference().equals(encounterId)
@@ -98,7 +99,7 @@ public class EncounterReportService {
   }
 
   public void addCompositions(Bundle bundle, String encounterId) {
-    resourceService.get(Composition.class)
+    resourceLookupService.get(Composition.class)
         .by(asList(
             Composition::hasEncounter,
             comp -> comp.getEncounter().getReference().equals(encounterId)
@@ -107,7 +108,7 @@ public class EncounterReportService {
   }
 
   public void addLists(Bundle bundle, String encounterId) {
-    resourceService.get(ListResource.class)
+    resourceLookupService.get(ListResource.class)
         .by(asList(
             ListResource::hasEncounter,
             list -> list.getEncounter().getReference().equals(encounterId)
@@ -116,7 +117,7 @@ public class EncounterReportService {
   }
 
   public void addQuestionnaireResponses(Bundle bundle, String encounterId) {
-    List<QuestionnaireResponse> qrs = resourceService.get(QuestionnaireResponse.class)
+    List<QuestionnaireResponse> qrs = resourceLookupService.get(QuestionnaireResponse.class)
         .by(asList(
             QuestionnaireResponse::hasContext,
             list -> list.getContext().getReference().equals(encounterId)

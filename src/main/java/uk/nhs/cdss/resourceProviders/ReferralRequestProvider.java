@@ -12,13 +12,14 @@ import org.hl7.fhir.dstu3.model.ReferralRequest;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Component;
+import uk.nhs.cdss.service.ResourceLookupService;
 import uk.nhs.cdss.service.ResourceService;
 
 @Component
 @AllArgsConstructor
 public class ReferralRequestProvider implements IResourceProvider {
 
-  private ResourceService resourceService;
+  private ResourceLookupService resourceLookupService;
 
   @Search
   public Collection<ReferralRequest> findByEncounterContext(@RequiredParam(name= ReferralRequest.SP_CONTEXT)
@@ -29,7 +30,7 @@ public class ReferralRequestProvider implements IResourceProvider {
       throw new InvalidRequestException("Resource type for 'context' must be 'Encounter'");
     }
 
-    return resourceService.get(ReferralRequest.class)
+    return resourceLookupService.get(ReferralRequest.class)
         .by(Arrays.asList(
             ReferralRequest::hasContext,
             rr -> rr.getContext().getReference().equals(contextParam.getValue())

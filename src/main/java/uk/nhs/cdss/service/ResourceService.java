@@ -29,62 +29,19 @@ public class ResourceService {
   private final ResourceIndexService resourceIndexService;
   private final FhirContext fhirContext;
 
-  @AllArgsConstructor(access = AccessLevel.PRIVATE)
-  public class GetBy<T extends IBaseResource> {
-
-    private Class<T> type;
-
-    public List<T> by(Predicate<T> condition) {
-      return by(Collections.singletonList(condition));
-    }
-
-    public List<T> by(List<Predicate<T>> conditions) {
-      var fhirParser = fhirContext.newJsonParser();
-      var resourceStream = ResourceService.this.getAllOfType(type).stream()
-          .map(res -> ResourceUtil.parseResource(res, type, fhirParser))
-          .filter(Objects::nonNull)
-          // 'And' all the predicates together
-          .filter(conditions.stream().reduce(x -> true, Predicate::and));
-
-      return VersionUtil.collectLatest(resourceStream);
-    }
-  }
-
-  public <T extends IBaseResource> GetBy<T> get(Class<T> type) {
-    return new GetBy<>(type);
-  }
-
-  @Transactional
-  public IBaseResource getResource(Long id, Long version, Class<? extends IBaseResource> clazz) {
-
-    ResourceEntity resource = (version != null
-        ? resourceRepository.findById(new IdVersion(id, version))
-        : resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id))
-        .orElseThrow(() ->
-            new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
-
-    // TODO check supplierId
-
-    var fhirParser = fhirContext.newJsonParser();
-    return ResourceUtil.parseResource(resource, clazz, fhirParser);
-  }
-
-  @Transactional
-  public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
-    return resourceRepository.findAllBySupplierIdEqualsAndResourceTypeEquals(
-        null, // TODO
-        ResourceUtil.getResourceType(clazz)
-    );
-  }
 
   @Transactional
   public ResourceEntity save(Resource resource) {
     var idVersion = new IdVersion(resourceIdService.nextId(), 1L);
+    resource.setIdElement(new IdType(
+        resource.getResourceType().name(),
+        idVersion.getId().toString(),
+        idVersion.getVersion().toString()));
 
     var fhirParser = fhirContext.newJsonParser();
 
     ResourceEntity resourceEntity = ResourceEntity.builder()
-        .supplierId(null) // TODO
+        .supplierId(null) // TODO CDSCT-139
         .idVersion(idVersion)
         .resourceType(resource.getResourceType())
         .resourceJson(fhirParser.encodeResourceToString(resource))
@@ -101,7 +58,7 @@ public class ResourceService {
         .findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
         .orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
 
-    String supplierId = null; // TODO
+    String supplierId = null; // TODO CDSCT-139
     if (!Objects.equals(supplierId, entity.getSupplierId())) {
       throw new AuthenticationException();
     }
