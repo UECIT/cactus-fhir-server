@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AppointmentService {
 
-  private final ResourceLookupService resourceLookupService;
   private final ResourceIndexService resourceIndexService;
 
   public List<Appointment> getByReferrals(List<String> referralRequestRefs) {

@@ -13,7 +13,7 @@ import uk.nhs.cdss.repos.BlobRepository;
 @AllArgsConstructor
 public class BlobService {
 
-  private BlobRepository blobRepository;
+  private final BlobRepository blobRepository;
 
   @Transactional
   public Optional<BlobEntity> getResource(String id) {

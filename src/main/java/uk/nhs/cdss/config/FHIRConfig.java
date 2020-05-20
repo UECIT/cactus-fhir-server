@@ -27,21 +27,6 @@ public class FHIRConfig {
     // Register types for extended profiles
     List<Class<? extends Resource>> profiles = Arrays.asList(
         CareConnectCarePlan.class
-//        CareConnectCareTeam.class,
-//        CareConnectEncounter.class,
-//        CareConnectEpisodeOfCare.class,
-//        CareConnectHealthcareService.class,
-//        CareConnectLocation.class,
-//        CareConnectMedication.class,
-//        CareConnectMedicationRequest.class,
-//        CareConnectObservation.class,
-//        CareConnectOrganization.class,
-//        CareConnectPatient.class,
-//        CareConnectPractitioner.class,
-//        CareConnectProcedure.class,
-//        CareConnectProcedureRequest.class,
-//        CareConnectRelatedPerson.class,
-//        CareConnectSpecimen.class
     );
 
     for (Class<? extends Resource> profileClass : profiles) {

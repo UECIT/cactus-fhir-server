@@ -36,7 +36,7 @@ public class EncounterReportService {
   private final GenericResourceLocator resourceLocator;
 
   public String addEncounter(Bundle bundle, long encounterId) {
-    Encounter encounter = (Encounter) resourceLookupService.getResource(
+    Encounter encounter = resourceLookupService.getResource(
         encounterId,
         null, //We can never specify version in a search with ID, find most recent by default.
         Encounter.class);
