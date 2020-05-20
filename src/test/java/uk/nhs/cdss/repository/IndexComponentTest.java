@@ -50,7 +50,7 @@ public class IndexComponentTest extends TestCase {
     ResourceEntity entity = resourceService.save(patient);
 
     List<ResourceIndex> femalePatients = resourceIndexRepository
-        .findAllBySupplierIdEqualsAndResourceTypeEqualsAndPathEqualsAndValueEquals(
+        .findAllBySupplierIdAndResourceTypeAndPathAndValue(
             null, ResourceType.Patient, "gender", "FEMALE");
 
     assertEquals("Single patient expected", 1, femalePatients.size());
@@ -70,13 +70,13 @@ public class IndexComponentTest extends TestCase {
 
     // Old index entry should be removed
     List<ResourceIndex> femalePatients = resourceIndexRepository
-        .findAllBySupplierIdEqualsAndResourceTypeEqualsAndPathEqualsAndValueEquals(
+        .findAllBySupplierIdAndResourceTypeAndPathAndValue(
             null, ResourceType.Patient, "gender", "FEMALE");
     assertEquals("No female patients expected", 0, femalePatients.size());
 
     // Patient should now be listed as male
     List<ResourceIndex> malePatients = resourceIndexRepository
-        .findAllBySupplierIdEqualsAndResourceTypeEqualsAndPathEqualsAndValueEquals(
+        .findAllBySupplierIdAndResourceTypeAndPathAndValue(
             null, ResourceType.Patient, "gender", "MALE");
 
     assertEquals("Single male patient expected", 1, malePatients.size());

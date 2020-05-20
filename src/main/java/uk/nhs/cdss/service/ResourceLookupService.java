@@ -42,7 +42,7 @@ public class ResourceLookupService {
 
   @Transactional
   public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
-    return resourceRepository.findAllBySupplierIdEqualsAndResourceTypeEquals(
+    return resourceRepository.findAllBySupplierIdAndResourceType(
         null, // TODO CDSCT-139
         ResourceUtil.getResourceType(clazz)
     );

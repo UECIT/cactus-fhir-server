@@ -13,5 +13,5 @@ public interface ResourceRepository extends JpaRepository<ResourceEntity, IdVers
 
   Optional<ResourceEntity> findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(Long id);
 
-  List<ResourceEntity> findAllBySupplierIdEqualsAndResourceTypeEquals(String supplierId, ResourceType resourceType);
+  List<ResourceEntity> findAllBySupplierIdAndResourceType(String supplierId, ResourceType resourceType);
 }

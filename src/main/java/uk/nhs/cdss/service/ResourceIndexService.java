@@ -81,7 +81,7 @@ public class ResourceIndexService {
     public List<T> eq(String path, String value) {
 
       List<ResourceIndex> matches = resourceIndexRepository
-          .findAllBySupplierIdEqualsAndResourceTypeEqualsAndPathEqualsAndValueEquals(
+          .findAllBySupplierIdAndResourceTypeAndPathAndValue(
               supplierId, ResourceUtil.getResourceType(type), path, value);
 
       if (matches.isEmpty()) {
