@@ -21,8 +21,6 @@ public class EncounterExtractor extends AbstractExtractor<Encounter> {
   public static final String PATIENT_IDENTIFIER =
       Encounter.SP_PATIENT + "." + Patient.SP_IDENTIFIER;
 
-  private final FhirContext context;
-  private final ResourceLookupService resourceLookupService;
   private final GenericResourceLocator resourceLocator;
 
   @Extract(PATIENT_IDENTIFIER)

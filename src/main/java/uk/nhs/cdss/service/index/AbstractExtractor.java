@@ -1,5 +1,7 @@
 package uk.nhs.cdss.service.index;
 
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.lang.reflect.InvocationTargetException;
@@ -8,6 +10,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.dstu3.model.DomainResource;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Reference;
@@ -33,10 +36,7 @@ public abstract class AbstractExtractor<T extends DomainResource> implements Ext
       }
 
       // Determine path
-      String path = ann.value();
-      if (path.isEmpty()) {
-        path = method.getName();
-      }
+      String path = defaultIfEmpty(ann.value(), method.getName());
 
       // Extract value
       Object rawValue;
