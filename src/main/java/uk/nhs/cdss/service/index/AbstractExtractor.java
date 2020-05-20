@@ -42,7 +42,7 @@ public abstract class AbstractExtractor<T extends DomainResource> implements Ext
       Object rawValue;
       try {
         rawValue = method.invoke(this, resource);
-      } catch (IllegalAccessException | InvocationTargetException e) {
+      } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
         log.error("Unable to extract field " + path, e);
         continue;
       }

@@ -87,6 +87,14 @@ public class ExtractorTest extends TestCase {
         "identifier", "foo|bar"
     )), fields);
   }
+
+  @Test
+  public void invalidExtractor() {
+    Multimap<String, String> fields = new InvalidExtractor().extract(PatientFixtures.patient());
+    assertEquals(Multimaps.forMap(Map.of(
+        "valid", "string"
+    )), fields);
+  }
 }
 
 class MockExtractor extends AbstractExtractor<Patient> {
@@ -109,6 +117,24 @@ class MockExtractor extends AbstractExtractor<Patient> {
   @Extract
   public Identifier identifier(Patient patient) {
     return new Identifier().setSystem("foo").setValue("bar");
+  }
+
+  @Override
+  public ResourceType getResourceType() {
+    return ResourceType.Patient;
+  }
+}
+
+class InvalidExtractor extends AbstractExtractor<Patient> {
+
+  @Extract
+  public String valid(Patient patient) {
+    return "string";
+  }
+
+  @Extract
+  public String invalid() {
+    return "string";
   }
 
   @Override
