@@ -9,8 +9,8 @@ import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.Reference;
 import org.hl7.fhir.dstu3.model.ResourceType;
-import org.hl7.fhir.instance.model.api.IIdType;
 import org.springframework.stereotype.Component;
+import uk.nhs.cdss.service.GenericResourceLocator;
 import uk.nhs.cdss.service.ResourceLookupService;
 
 @Component
@@ -23,6 +23,7 @@ public class EncounterExtractor extends AbstractExtractor<Encounter> {
 
   private final FhirContext context;
   private final ResourceLookupService resourceLookupService;
+  private final GenericResourceLocator resourceLocator;
 
   @Extract(PATIENT_IDENTIFIER)
   public List<Identifier> patientIdentifier(Encounter encounter) {
@@ -32,29 +33,15 @@ public class EncounterExtractor extends AbstractExtractor<Encounter> {
       return null;
     }
 
-    Patient patient = null;
     try {
       // TODO CDSCT-139 use supplierID and necessary auth to fetch patient resource
-      IIdType id = subject.getReferenceElement();
-      String baseUrl = id.getBaseUrl();
-      if (baseUrl == null) {
-        patient = resourceLookupService.getResource(id.getIdPartAsLong(), null, Patient.class);
-      } else {
-        patient = context.newRestfulGenericClient(baseUrl)
-            .read()
-            .resource(Patient.class)
-            .withId(id.getIdPart())
-            .execute();
-      }
+      return resourceLocator.findResource(subject, Patient.class)
+          .map(Patient::getIdentifier)
+          .orElse(null);
     } catch (Exception e) {
       log.error("Unable to load subject for Encounter", e);
-    }
-
-    if (patient == null) {
       return null;
     }
-
-    return patient.getIdentifier();
   }
 
   @Override

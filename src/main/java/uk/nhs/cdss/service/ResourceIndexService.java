@@ -4,7 +4,6 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -68,7 +67,8 @@ public class ResourceIndexService {
             ::iterator);
   }
 
-  public <T extends Resource> SearchByType<T> search(String supplierId, Class<T> type) {
+  public <T extends Resource> SearchByType<T> search(Class<T> type) {
+    String supplierId = null; // TODO CDSCT-139
     return new SearchByType<>(supplierId, type);
   }
 

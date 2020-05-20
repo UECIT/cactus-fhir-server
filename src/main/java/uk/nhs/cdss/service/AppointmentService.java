@@ -1,11 +1,9 @@
 package uk.nhs.cdss.service;
 
-import static java.util.Arrays.asList;
-
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.hl7.fhir.dstu3.model.Appointment;
-import org.hl7.fhir.dstu3.model.Reference;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,14 +11,14 @@ import org.springframework.stereotype.Service;
 public class AppointmentService {
 
   private final ResourceLookupService resourceLookupService;
+  private final ResourceIndexService resourceIndexService;
 
   public List<Appointment> getByReferrals(List<String> referralRequestRefs) {
-    return resourceLookupService.get(Appointment.class)
-        .by(asList(
-            Appointment::hasIncomingReferral,
-            app -> app.getIncomingReferral().stream()
-                .map(Reference::getReference)
-                .anyMatch(referralRequestRefs::contains)));
+    return referralRequestRefs.stream()
+        .flatMap(ref -> resourceIndexService.search(Appointment.class)
+            .eq(Appointment.SP_INCOMINGREFERRAL, ref)
+            .stream())
+        .collect(Collectors.toList());
   }
 
 }

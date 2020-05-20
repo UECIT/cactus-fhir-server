@@ -45,10 +45,8 @@ public class EncounterProvider implements IResourceProvider {
 
     TokenParam identifierParam = param.toTokenParam(context);
 
-    String supplierId = null; // TODO CDSCT-139 get from Auth header
-
     // TODO check string format of identifier is to spec
-    return resourceIndexService.search(supplierId, Encounter.class)
+    return resourceIndexService.search(Encounter.class)
         .eq(EncounterExtractor.PATIENT_IDENTIFIER,
             identifierParam.getSystem() + "|" + identifierParam.getValue());
   }

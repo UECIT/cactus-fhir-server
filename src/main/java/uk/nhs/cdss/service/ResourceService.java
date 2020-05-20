@@ -3,22 +3,15 @@ package uk.nhs.cdss.service;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
 import javax.transaction.Transactional;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Resource;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Service;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
-import uk.nhs.cdss.util.ResourceUtil;
-import uk.nhs.cdss.util.VersionUtil;
 
 @Service
 @AllArgsConstructor
@@ -47,9 +40,9 @@ public class ResourceService {
         .resourceJson(fhirParser.encodeResourceToString(resource))
         .build();
 
+    resourceRepository.save(resourceEntity);
     resourceIndexService.update(resource, resourceEntity);
-
-    return resourceRepository.save(resourceEntity);
+    return resourceEntity;
   }
 
   @Transactional
@@ -63,14 +56,14 @@ public class ResourceService {
       throw new AuthenticationException();
     }
 
-    ResourceEntity updated = updateRecord(entity, resource);
-    updated = resourceRepository.save(updated);
-    resourceIndexService.update(resource, updated);
+    ResourceEntity updatedEntity = updateResource(entity, resource);
+    resourceRepository.save(updatedEntity);
+    resourceIndexService.update(resource, updatedEntity);
 
-    return updated;
+    return updatedEntity;
   }
 
-  private ResourceEntity updateRecord(ResourceEntity entity, Resource newResource) {
+  private ResourceEntity updateResource(ResourceEntity entity, Resource newResource) {
 
     Long currentVersion = entity.getIdVersion().getVersion();
     Long id = entity.getIdVersion().getId();

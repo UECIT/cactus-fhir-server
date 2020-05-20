@@ -25,13 +25,12 @@ public class CarePlanProvider implements IResourceProvider {
   public Collection<CarePlan> findByEncounterContext(
       @RequiredParam(name = CarePlan.SP_CONTEXT) ReferenceParam contextParam) {
 
-    String supplierId = null; // TODO CDSCT-139 get from Auth header
     String resourceType = contextParam.getResourceType();
     if (resourceType != null && !resourceType.equals(ResourceType.Encounter.name())) {
       throw new InvalidRequestException("Resource type for 'context' must be 'Encounter'");
     }
 
-    return resourceIndexService.search(supplierId, CarePlan.class)
+    return resourceIndexService.search(CarePlan.class)
         .eq(CarePlan.SP_CONTEXT, contextParam.getValue());
   }
 
