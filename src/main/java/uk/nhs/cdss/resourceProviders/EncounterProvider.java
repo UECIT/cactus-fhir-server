@@ -15,13 +15,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleType;
 import org.hl7.fhir.dstu3.model.Encounter;
-import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Component;
 import uk.nhs.cdss.service.EncounterReportService;
+import uk.nhs.cdss.service.ResourceIndexService;
 import uk.nhs.cdss.service.ResourceService;
-import uk.nhs.cdss.util.RetryUtils;
+import uk.nhs.cdss.service.index.EncounterExtractor;
+import uk.nhs.cdss.service.index.IndexMappers;
 
 @Component
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class EncounterProvider implements IResourceProvider {
 
   private final EncounterReportService encounterReportService;
   private final ResourceService resourceService;
+  private final ResourceIndexService resourceIndexService;
   private final FhirContext context;
 
   @Search
@@ -38,31 +40,9 @@ public class EncounterProvider implements IResourceProvider {
 
     TokenParam identifierParam = param.toTokenParam(context);
 
-    return resourceService.get(Encounter.class)
-        .by(encounter -> {
-
-          if (!encounter.hasSubject()) {
-            return false;
-          }
-          IdType id = new IdType(encounter.getSubject().getReference());
-
-          try {
-            String baseUrl = id.getBaseUrl();
-            //TODO: This seems inefficient, have to get the patient for each case!?
-            Patient patient = RetryUtils.retry(() -> context.newRestfulGenericClient(baseUrl)
-                    .read().resource(Patient.class)
-                    .withId(id)
-                    .execute(),
-                baseUrl);
-
-            return patient.getIdentifier().stream()
-                .anyMatch(identifier -> identifierParam.getSystem().equals(identifier.getSystem())
-                    && identifierParam.getValue().equals(identifier.getValue()));
-          } catch (Exception e) {
-            log.error("Unable to find patient {} for encounter {}: {}", id.getValue(), encounter.getId(), e.getMessage());
-            return false;
-          }
-        });
+    return resourceIndexService.search(Encounter.class)
+        .eq(EncounterExtractor.PATIENT_IDENTIFIER,
+            IndexMappers.mapCoding(identifierParam.getSystem(), identifierParam.getValue()));
   }
 
   @Search

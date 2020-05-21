@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.nhs.cdss.entities.ResourceEntity;
@@ -31,10 +33,17 @@ import uk.nhs.cdss.repos.ResourceRepository;
 @RunWith(MockitoJUnitRunner.class)
 public class ResourceServiceTest {
 
+  @InjectMocks
   private ResourceService resourceService;
+
+  @InjectMocks
+  private ResourceLookupService resourceLookupService;
 
   @Mock
   private ResourceRepository resourceRepository;
+
+  @Mock
+  private ResourceIndexService resourceIndexService;
 
   @Mock
   private ResourceIdService resourceIdService;
@@ -42,16 +51,15 @@ public class ResourceServiceTest {
   @Mock
   private IParser parser;
 
+  @Mock
+  private FhirContext fhirContext;
+
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void before() {
-    resourceService = new ResourceService(
-        resourceRepository,
-        resourceIdService,
-        parser
-    );
+    when(fhirContext.newJsonParser()).thenReturn(parser);
   }
 
   @Test
@@ -64,10 +72,11 @@ public class ResourceServiceTest {
     when(parser.parseResource(CarePlan.class, carePlanEntity.getResourceJson()))
         .thenReturn(carePlan);
 
-    IBaseResource returnedResource = resourceService.getResource(1L, null, CarePlan.class);
+    IBaseResource returnedResource = resourceLookupService.getResource(1L, null, CarePlan.class);
 
     assertThat(returnedResource, is(carePlan));
   }
+
   @Test
   public void shouldGetVersionedResource() {
     ResourceEntity carePlanEntity = validCarePlanEntity();
@@ -78,7 +87,7 @@ public class ResourceServiceTest {
     when(parser.parseResource(CarePlan.class, carePlanEntity.getResourceJson()))
         .thenReturn(carePlan);
 
-    IBaseResource returnedResource = resourceService.getResource(1L, 1L, CarePlan.class);
+    IBaseResource returnedResource = resourceLookupService.getResource(1L, 1L, CarePlan.class);
 
     assertThat(returnedResource, is(carePlan));
   }
@@ -90,7 +99,7 @@ public class ResourceServiceTest {
 
     expectedException.expect(ResourceNotFoundException.class);
 
-    resourceService.getResource(1L, 1L, CarePlan.class);
+    resourceLookupService.getResource(1L, 1L, CarePlan.class);
   }
 
   @Test
@@ -101,9 +110,8 @@ public class ResourceServiceTest {
     when(parser.encodeResourceToString(carePlan))
         .thenReturn(carePlanEntity.getResourceJson());
     when(resourceRepository.save(argThat(sameBeanAs(carePlanEntity)
-            .ignoring("idVersion"))))
+        .ignoring("idVersion"))))
         .thenReturn(carePlanEntity);
-
 
     ResourceEntity savedCarePlanEntity = resourceService.save(carePlan);
 
@@ -121,7 +129,6 @@ public class ResourceServiceTest {
         .ignoring("idVersion"))))
         .thenReturn(carePlanEntity);
 
-
     ResourceEntity savedCarePlanEntity = resourceService.save(carePlan);
 
     assertThat(savedCarePlanEntity, is(carePlanEntity));
@@ -129,26 +136,28 @@ public class ResourceServiceTest {
 
   private ResourceEntity validCarePlanEntity() {
     return ResourceEntity.builder()
-        .idVersion(new IdVersion(1L, 1L))
+        .supplierId(null) // TODO CDSCT-139
+        .idVersion(new IdVersion(0L, 1L))
         .resourceType(ResourceType.CarePlan)
         .resourceJson(
             "{\"resourceType\":\"CarePlan\","
-            + "\"id\":\"selfCare\","
-            + "\"meta\":{\"profile\":[\"https://fhir.hl7.org.uk/STU3/StructureDefinition/CareConnect-CarePlan-1\"]},"
-            + "\"text\":{\"status\":\"generated\",\"div\":\"<div xmlns=\\\"http://www.w3.org/1999/xhtml\\\">After Care Instructions</div>\"},"
-            + "\"status\":\"active\","
-            + "\"intent\":\"option\","
-            + "\"title\":\"Self care\"}")
+                + "\"id\":\"selfCare\","
+                + "\"meta\":{\"profile\":[\"https://fhir.hl7.org.uk/STU3/StructureDefinition/CareConnect-CarePlan-1\"]},"
+                + "\"text\":{\"status\":\"generated\",\"div\":\"<div xmlns=\\\"http://www.w3.org/1999/xhtml\\\">After Care Instructions</div>\"},"
+                + "\"status\":\"active\","
+                + "\"intent\":\"option\","
+                + "\"title\":\"Self care\"}")
         .build();
   }
 
   private CarePlan validCarePlan() {
     Narrative narrative = new Narrative();
     narrative.setStatus(NarrativeStatus.GENERATED);
-    narrative.setDivAsString("<div xmlns=\\\"http://www.w3.org/1999/xhtml\\\">After Care Instructions</div>");
+    narrative.setDivAsString(
+        "<div xmlns=\\\"http://www.w3.org/1999/xhtml\\\">After Care Instructions</div>");
 
     CarePlan carePlan = new CarePlan();
-    carePlan.setId(new IdType(1L).withVersion("1"));
+    carePlan.setId(new IdType(0L).withVersion("1"));
     carePlan.setTitle("Self care");
     carePlan.setIntent(CarePlanIntent.OPTION);
     carePlan.setStatus(CarePlanStatus.ACTIVE);

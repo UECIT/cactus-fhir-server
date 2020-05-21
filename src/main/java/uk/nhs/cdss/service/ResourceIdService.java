@@ -10,7 +10,7 @@ import uk.nhs.cdss.repos.ResourceIdRepository;
 @Service
 public class ResourceIdService {
 
-  private ResourceIdRepository resourceIdRepository;
+  private final ResourceIdRepository resourceIdRepository;
 
   public Long nextId() {
     if (!resourceIdRepository.existsById(1L)) {

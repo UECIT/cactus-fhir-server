@@ -2,13 +2,17 @@ package uk.nhs.cdss.entities;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @MappedSuperclass
-public class SupplierPartitioned {
+@NoArgsConstructor
+@AllArgsConstructor
+public abstract class SupplierPartitioned {
 
   @Column(name = "supplierId")
-  private String supplierId;
+  protected String supplierId;
 
 }

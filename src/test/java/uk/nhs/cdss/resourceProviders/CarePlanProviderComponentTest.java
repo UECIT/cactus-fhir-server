@@ -2,13 +2,11 @@ package uk.nhs.cdss.resourceProviders;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.mockito.Mockito.when;
 
-import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import java.util.Collection;
-import java.util.Collections;
 import org.hamcrest.CustomTypeSafeMatcher;
 import org.hamcrest.Matcher;
 import org.hl7.fhir.dstu3.model.CarePlan;
@@ -19,13 +17,10 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.nhs.cdss.entities.ResourceEntity;
-import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.fixtures.CarePlanFixtures;
-import uk.nhs.cdss.repos.ResourceRepository;
+import uk.nhs.cdss.service.ResourceService;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
@@ -36,10 +31,7 @@ public class CarePlanProviderComponentTest {
   private CarePlanProvider carePlanProvider;
 
   @Autowired
-  private IParser fhirParser;
-
-  @MockBean
-  private ResourceRepository resourceRepository;
+  private ResourceService resourceService;
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -47,12 +39,7 @@ public class CarePlanProviderComponentTest {
   @Test
   public void findsCarePlan() {
     CarePlan expected = CarePlanFixtures.carePlan();
-    ResourceEntity resourceEntity = ResourceEntity.builder()
-        .resourceType(ResourceType.CarePlan)
-        .idVersion(new IdVersion(1L , 1L))
-        .resourceJson(fhirParser.encodeResourceToString(expected))
-        .build();
-    when(resourceRepository.findAll()).thenReturn(Collections.singletonList(resourceEntity));
+    resourceService.save(expected);
 
     Collection<CarePlan> results = carePlanProvider
         .findByEncounterContext(referenceParam(expected));

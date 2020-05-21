@@ -12,17 +12,20 @@ import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import uk.nhs.cdss.entities.ResourceEntity;
+import uk.nhs.cdss.service.ResourceLookupService;
 import uk.nhs.cdss.service.ResourceService;
 
 @AllArgsConstructor
 public class ResourceProvider implements IResourceProvider {
 
-  private ResourceService resourceService;
-  private Class<? extends Resource> classResource;
+  private final ResourceService resourceService;
+  private final ResourceLookupService resourceLookupService;
+  private final Class<? extends Resource> classResource;
 
   @Read(version = true)
   public IBaseResource getResourceById(@IdParam IdType id) {
-    return resourceService.getResource(id.getIdPartAsLong(), id.getVersionIdPartAsLong(), getResourceType());
+    return resourceLookupService
+        .getResource(id.getIdPartAsLong(), id.getVersionIdPartAsLong(), getResourceType());
   }
 
   @Create

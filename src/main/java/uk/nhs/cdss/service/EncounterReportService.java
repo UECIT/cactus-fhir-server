@@ -29,13 +29,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EncounterReportService {
 
-  private final ResourceService resourceService;
+  private final ResourceLookupService resourceLookupService;
+  private final ResourceIndexService resourceIndexService;
   private final ReferenceService referenceService;
   private final AppointmentService appointmentService;
   private final GenericResourceLocator resourceLocator;
 
   public String addEncounter(Bundle bundle, long encounterId) {
-    Encounter encounter = (Encounter) resourceService.getResource(
+    Encounter encounter = resourceLookupService.getResource(
         encounterId,
         null, //We can never specify version in a search with ID, find most recent by default.
         Encounter.class);
@@ -61,11 +62,8 @@ public class EncounterReportService {
   }
 
   public void addReferralRequests(Bundle bundle, String encounterId) {
-    List<ReferralRequest> referralRequests = resourceService.get(ReferralRequest.class)
-        .by(asList(
-            ReferralRequest::hasContext,
-            rr -> rr.getContext().getReference().equals(encounterId)
-        ));
+    List<ReferralRequest> referralRequests = resourceIndexService.search(ReferralRequest.class)
+        .eq(ReferralRequest.SP_CONTEXT, encounterId);
 
     referralRequests.forEach(addResource(bundle));
 
@@ -81,7 +79,8 @@ public class EncounterReportService {
 
   private void addAppointments(List<ReferralRequest> referralRequests, Bundle bundle) {
     List<String> referralRequestReferences = referralRequests.stream()
-        .map(rr -> referenceService.buildUrl(ResourceType.ReferralRequest, rr.getIdElement().toVersionless()))
+        .map(rr -> referenceService
+            .buildUrl(ResourceType.ReferralRequest, rr.getIdElement().toVersionless()))
         .collect(Collectors.toUnmodifiableList());
 
     appointmentService.getByReferrals(referralRequestReferences)
@@ -89,38 +88,26 @@ public class EncounterReportService {
   }
 
   public void addCarePlans(Bundle bundle, String encounterId) {
-    resourceService.get(CarePlan.class)
-        .by(asList(
-            CarePlan::hasContext,
-            cp -> cp.getContext().getReference().equals(encounterId)
-        ))
+    resourceIndexService.search(CarePlan.class)
+        .eq(CarePlan.SP_CONTEXT, encounterId)
         .forEach(addResource(bundle));
   }
 
   public void addCompositions(Bundle bundle, String encounterId) {
-    resourceService.get(Composition.class)
-        .by(asList(
-            Composition::hasEncounter,
-            comp -> comp.getEncounter().getReference().equals(encounterId)
-        ))
+    resourceIndexService.search(Composition.class)
+        .eq(Composition.SP_ENCOUNTER, encounterId)
         .forEach(addResource(bundle));
   }
 
   public void addLists(Bundle bundle, String encounterId) {
-    resourceService.get(ListResource.class)
-        .by(asList(
-            ListResource::hasEncounter,
-            list -> list.getEncounter().getReference().equals(encounterId)
-        ))
+    resourceIndexService.search(ListResource.class)
+        .eq(ListResource.SP_ENCOUNTER, encounterId)
         .forEach(addResource(bundle));
   }
 
   public void addQuestionnaireResponses(Bundle bundle, String encounterId) {
-    List<QuestionnaireResponse> qrs = resourceService.get(QuestionnaireResponse.class)
-        .by(asList(
-            QuestionnaireResponse::hasContext,
-            list -> list.getContext().getReference().equals(encounterId)
-        ));
+    List<QuestionnaireResponse> qrs = resourceIndexService.search(QuestionnaireResponse.class)
+        .eq(QuestionnaireResponse.SP_CONTEXT, encounterId);
 
     qrs.forEach(addResource(bundle));
 

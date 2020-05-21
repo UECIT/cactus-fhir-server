@@ -1,105 +1,79 @@
 package uk.nhs.cdss.service;
 
-import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import javax.transaction.Transactional;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Resource;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Service;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
-import uk.nhs.cdss.util.ResourceUtil;
-import uk.nhs.cdss.util.VersionUtil;
 
 @Service
 @AllArgsConstructor
 public class ResourceService {
 
-	private ResourceRepository resourceRepository;
-	private ResourceIdService resourceIdService;
-	private IParser fhirParser;
+  private final ResourceRepository resourceRepository;
+  private final ResourceIdService resourceIdService;
+  private final ResourceIndexService resourceIndexService;
+  private final FhirContext fhirContext;
 
-	@AllArgsConstructor(access = AccessLevel.PRIVATE)
-	public class GetBy<T extends IBaseResource> {
-		private Class<T> type;
-		public List<T> by(Predicate<T> condition) {
-		  return by(Collections.singletonList(condition));
+
+  @Transactional
+  public ResourceEntity save(Resource resource) {
+    var idVersion = new IdVersion(resourceIdService.nextId(), 1L);
+    resource.setIdElement(new IdType(
+        resource.getResourceType().name(),
+        idVersion.getId().toString(),
+        idVersion.getVersion().toString()));
+
+    var fhirParser = fhirContext.newJsonParser();
+
+    ResourceEntity resourceEntity = ResourceEntity.builder()
+        .supplierId(null) // TODO CDSCT-139
+        .idVersion(idVersion)
+        .resourceType(resource.getResourceType())
+        .resourceJson(fhirParser.encodeResourceToString(resource))
+        .build();
+
+    resourceRepository.save(resourceEntity);
+    resourceIndexService.update(resource, resourceEntity);
+    return resourceEntity;
+  }
+
+  @Transactional
+  public ResourceEntity update(Long id, Resource resource) {
+    ResourceEntity entity = resourceRepository
+        .findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
+        .orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
+
+    String supplierId = null; // TODO CDSCT-139
+    if (!Objects.equals(supplierId, entity.getSupplierId())) {
+      throw new AuthenticationException();
     }
-		public List<T> by(List<Predicate<T>> conditions) {
-			var resourceStream = ResourceService.this.getAllOfType(type).stream()
-					.map(res -> ResourceUtil.parseResource(res, type, fhirParser))
-					.filter(Objects::nonNull)
-					// 'And' all the predicates together
-					.filter(conditions.stream().reduce(x->true, Predicate::and));
 
-			return VersionUtil.collectLatest(resourceStream);
-		}
-	}
+    ResourceEntity updatedEntity = updateResource(entity, resource);
+    resourceRepository.save(updatedEntity);
+    resourceIndexService.update(resource, updatedEntity);
 
-	public <T extends IBaseResource> GetBy<T> get(Class<T> type) {
-		return new GetBy<>(type);
-	}
-	
-	@Transactional
-	public IBaseResource getResource(Long id, Long version, Class<? extends IBaseResource> clazz) {
+    return updatedEntity;
+  }
 
-		ResourceEntity resource = (version != null
-				? resourceRepository.findById(new IdVersion(id, version))
-				: resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id))
-					.orElseThrow(() ->
-							new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
+  private ResourceEntity updateResource(ResourceEntity entity, Resource newResource) {
 
-		return ResourceUtil.parseResource(resource, clazz, fhirParser);
-	}
+    Long currentVersion = entity.getIdVersion().getVersion();
+    Long id = entity.getIdVersion().getId();
 
-	@Transactional
-	public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
-		return resourceRepository.findAll()
-				.stream().parallel()
-				.filter(resourceEntity -> resourceEntity.getResourceType().equals(ResourceUtil.getResourceType(clazz)))
-				.collect(Collectors.toList());
-	}
+    var fhirParser = fhirContext.newJsonParser();
 
-	@Transactional
-	public ResourceEntity save(Resource resource) {
-		var idVersion = new IdVersion(resourceIdService.nextId(), 1L);
-
-		ResourceEntity resourceEntity = ResourceEntity.builder()
-				.idVersion(idVersion)
-				.resourceType(resource.getResourceType())
-				.resourceJson(fhirParser.encodeResourceToString(resource))
-				.build();
-
-		return resourceRepository.save(resourceEntity);
-	}
-
-	@Transactional
-	public ResourceEntity update(Long id, Resource resource) {
-		var updated = resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
-				.map(entity -> updateRecord(entity, resource))
-				.orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
-
-		return resourceRepository.save(updated);
-	}
-
-	private ResourceEntity updateRecord(ResourceEntity entity, Resource newResource) {
-
-		Long currentVersion = entity.getIdVersion().getVersion();
-		Long id = entity.getIdVersion().getId();
-
-		return ResourceEntity.builder()
-				.resourceJson(fhirParser.encodeResourceToString(newResource))
-				.resourceType(entity.getResourceType())
-				.idVersion(new IdVersion(id, currentVersion + 1L))
-				.build();
-	}
+    return entity.toBuilder()
+        .resourceJson(fhirParser.encodeResourceToString(newResource))
+        .resourceType(entity.getResourceType())
+        .idVersion(new IdVersion(id, currentVersion + 1L))
+        .build();
+  }
 }
