@@ -46,7 +46,7 @@ public class AuditService {
    */
   public void endEntry(HttpResponse response) {
     AuditEntry entry = getCurrentEntry();
-    entry.setResponseStatus(response.getStatusText());
+    entry.setResponseStatus(String.valueOf(response.getStatus()));
     entry.setResponseHeaders(response.getHeadersString());
     entry.setResponseBody(response.getBodyString());
 

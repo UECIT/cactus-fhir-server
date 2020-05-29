@@ -45,7 +45,6 @@ public class HttpResponse implements HttpExchange {
     return HttpResponse.builder()
         .headers(headers)
         .status(responseWrapper.getStatus())
-        //TODO: this is empty as cache has been flushed eaerlier.
         .body(responseWrapper.getContentAsByteArray())
         .build();
   }

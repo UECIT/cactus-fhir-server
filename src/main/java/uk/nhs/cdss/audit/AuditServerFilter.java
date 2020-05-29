@@ -50,7 +50,6 @@ public class AuditServerFilter extends OncePerRequestFilter {
 
     try {
       filterChain.doFilter(requestWrapper, responseWrapper);
-      responseWrapper.copyBodyToResponse();
     } finally {
       AuditSession auditSession = auditService
           .completeAuditSession(HttpRequest.from(requestWrapper),
@@ -58,6 +57,7 @@ public class AuditServerFilter extends OncePerRequestFilter {
 
       //TODO: Send audit session to SQS
       log.info(auditSession.toString());
+      responseWrapper.copyBodyToResponse();
     }
   }
 }
