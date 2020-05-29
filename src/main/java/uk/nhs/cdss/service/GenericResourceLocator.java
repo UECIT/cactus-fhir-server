@@ -8,6 +8,7 @@ import org.hl7.fhir.dstu3.model.Reference;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.springframework.stereotype.Service;
+import uk.nhs.cdss.security.AuthenticatedFhirClientFactory;
 import uk.nhs.cdss.util.RetryUtils;
 
 @Service
@@ -16,6 +17,7 @@ import uk.nhs.cdss.util.RetryUtils;
 public class GenericResourceLocator {
 
   private final FhirContext fhirContext;
+  private final AuthenticatedFhirClientFactory clientFactory;
   private final ResourceLookupService resourceLookupService;
 
   public Optional<? extends IBaseResource> findResource(Reference reference) {
@@ -53,7 +55,7 @@ public class GenericResourceLocator {
           resourceLookupService.getResource(id.getIdPartAsLong(), null, type));
     } else {
       T resource = RetryUtils.retry(() ->
-          fhirContext.newRestfulGenericClient(baseUrl)
+          clientFactory.getClient(baseUrl)
               .read()
               .resource(type)
               .withId(id)
