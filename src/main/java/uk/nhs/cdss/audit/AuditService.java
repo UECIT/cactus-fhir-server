@@ -89,7 +89,7 @@ public class AuditService {
       }
 
       session.setRequestBody(request.getBodyString());
-      session.setResponseStatus(response.getStatusText());
+      session.setResponseStatus(String.valueOf(response.getStatus()));
       session.setResponseHeaders(response.getHeadersString());
       session.setResponseBody(response.getBodyString());
     } finally {
