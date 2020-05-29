@@ -26,6 +26,5 @@ public class AuditSession {
 
   List<AuditEntry> entries;
   Instant createdDate;
-  String sessionId;
 
 }
