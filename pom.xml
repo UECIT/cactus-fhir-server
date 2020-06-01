@@ -16,8 +16,10 @@
     <java.version>11</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
     <fhir.version>3.0.0</fhir.version>
     <drools.version>7.28.0.Final</drools.version>
+    <cactus-common.version>0.0.1-SNAPSHOT</cactus-common.version>
   </properties>
 
   <repositories>
@@ -48,7 +50,7 @@
     <dependency>
       <groupId>uk.nhs.cactus</groupId>
       <artifactId>common</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>${cactus-common.version}</version>
     </dependency>
 
     <!-- Spring Dependencies -->
