@@ -14,11 +14,11 @@ import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceIndex;
 import uk.nhs.cdss.repos.ResourceIndexRepository;
 import uk.nhs.cdss.repos.ResourceRepository;
-import uk.nhs.cdss.security.TokenAuthenticationService;
 import uk.nhs.cdss.service.index.Extractor;
 import uk.nhs.cdss.util.ResourceUtil;
 

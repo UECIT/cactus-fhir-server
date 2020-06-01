@@ -8,10 +8,10 @@ import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Service;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
-import uk.nhs.cdss.security.TokenAuthenticationService;
 import uk.nhs.cdss.util.ResourceUtil;
 
 /**

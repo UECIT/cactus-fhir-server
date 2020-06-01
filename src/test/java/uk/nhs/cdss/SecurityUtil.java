@@ -2,7 +2,7 @@ package uk.nhs.cdss;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
-import uk.nhs.cdss.security.CactusPrincipal;
+import uk.nhs.cactus.common.security.CactusPrincipal;
 
 public class SecurityUtil {
 

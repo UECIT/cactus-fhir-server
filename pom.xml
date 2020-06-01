@@ -37,9 +37,20 @@
       <name>bintray</name>
       <url>https://dl.bintray.com/ems-test-harness/EMS-Test-Harness</url>
     </repository>
+    <repository>
+      <id>cactus-common</id>
+      <name>GitHub UECIT Apache Maven Packages</name>
+      <url>https://maven.pkg.github.com/UECIT/cactus-common</url>
+    </repository>
   </repositories>
 
   <dependencies>
+    <dependency>
+      <groupId>uk.nhs.cactus</groupId>
+      <artifactId>common</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+
     <!-- Spring Dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

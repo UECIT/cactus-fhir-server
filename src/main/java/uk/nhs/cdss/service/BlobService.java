@@ -6,9 +6,9 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Service;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.entities.BlobEntity;
 import uk.nhs.cdss.repos.BlobRepository;
-import uk.nhs.cdss.security.TokenAuthenticationService;
 
 @Service
 @AllArgsConstructor
