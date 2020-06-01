@@ -17,7 +17,7 @@ public class AuthenticatedFhirClientFactory {
     var client = fhirContext.newRestfulGenericClient(baseUrl);
 
     var authentication = SecurityContextHolder.getContext().getAuthentication();
-    var credentials = (CactusToken) authentication.getCredentials();
+    var credentials = authentication == null ? null : (CactusToken) authentication.getCredentials();
     if (credentials != null) {
       client.registerInterceptor(new BearerTokenAuthInterceptor(credentials.getToken()));
     }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
+import uk.nhs.cdss.security.TokenAuthenticationService;
 import uk.nhs.cdss.util.ResourceUtil;
 
 /**
@@ -34,7 +35,7 @@ public class ResourceLookupService {
         .orElseThrow(() ->
             new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
 
-    // TODO CDSCT-139 check supplierId
+    TokenAuthenticationService.requireSupplierId(resource.getSupplierId());
 
     var fhirParser = fhirContext.newJsonParser();
     return ResourceUtil.parseResource(resource, clazz, fhirParser);
@@ -43,7 +44,7 @@ public class ResourceLookupService {
   @Transactional
   public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
     return resourceRepository.findAllBySupplierIdAndResourceType(
-        null, // TODO CDSCT-139
+        TokenAuthenticationService.requireSupplierId(),
         ResourceUtil.getResourceType(clazz)
     );
   }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
+import uk.nhs.cdss.security.TokenAuthenticationService;
 
 @Service
 @AllArgsConstructor
@@ -34,7 +35,7 @@ public class ResourceService {
     var fhirParser = fhirContext.newJsonParser();
 
     ResourceEntity resourceEntity = ResourceEntity.builder()
-        .supplierId(null) // TODO CDSCT-139
+        .supplierId(TokenAuthenticationService.requireSupplierId())
         .idVersion(idVersion)
         .resourceType(resource.getResourceType())
         .resourceJson(fhirParser.encodeResourceToString(resource))
@@ -51,10 +52,7 @@ public class ResourceService {
         .findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
         .orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
 
-    String supplierId = null; // TODO CDSCT-139
-    if (!Objects.equals(supplierId, entity.getSupplierId())) {
-      throw new AuthenticationException();
-    }
+    TokenAuthenticationService.requireSupplierId(entity.getSupplierId());
 
     ResourceEntity updatedEntity = updateResource(entity, resource);
     resourceRepository.save(updatedEntity);

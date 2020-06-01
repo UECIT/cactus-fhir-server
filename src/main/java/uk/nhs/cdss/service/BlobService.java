@@ -8,6 +8,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Service;
 import uk.nhs.cdss.entities.BlobEntity;
 import uk.nhs.cdss.repos.BlobRepository;
+import uk.nhs.cdss.security.TokenAuthenticationService;
 
 @Service
 @AllArgsConstructor
@@ -17,8 +18,10 @@ public class BlobService {
 
   @Transactional
   public Optional<BlobEntity> getResource(String id) {
-    // TODO CDSCT-139 check supplier ID
-  	return blobRepository.findById(id);
+    Optional<BlobEntity> blob = blobRepository.findById(id);
+    blob.ifPresent(b -> TokenAuthenticationService.requireSupplierId(b.getSupplierId()));
+
+    return blob;
   }
 
   @Transactional
@@ -27,7 +30,7 @@ public class BlobService {
     byte[] digest = DigestUtils.sha1(data);
 
     BlobEntity entity = BlobEntity.builder()
-        .supplierId(null) // TODO CDSCT-139
+        .supplierId(TokenAuthenticationService.requireSupplierId())
         .id(Base64.encodeBase64URLSafeString(digest))
         .contentType(contentType)
         .resourceData(data)

@@ -18,6 +18,7 @@ import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceIndex;
 import uk.nhs.cdss.repos.ResourceIndexRepository;
 import uk.nhs.cdss.repos.ResourceRepository;
+import uk.nhs.cdss.security.TokenAuthenticationService;
 import uk.nhs.cdss.service.index.Extractor;
 import uk.nhs.cdss.util.ResourceUtil;
 
@@ -68,7 +69,7 @@ public class ResourceIndexService {
   }
 
   public <T extends Resource> SearchByType<T> search(Class<T> type) {
-    String supplierId = null; // TODO CDSCT-139
+    String supplierId = TokenAuthenticationService.requireSupplierId();
     return new SearchByType<>(supplierId, type);
   }
 
