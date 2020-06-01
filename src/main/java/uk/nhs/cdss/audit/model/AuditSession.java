@@ -15,6 +15,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 public class AuditSession {
 
+  String requestOrigin;
   String requestUrl;
   String requestMethod;
   String requestHeaders;

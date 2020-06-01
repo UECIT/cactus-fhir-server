@@ -2,6 +2,8 @@ package uk.nhs.cdss.audit.model;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toUnmodifiableList;
+import static java.util.stream.Stream.concat;
 
 import ca.uhn.fhir.rest.client.api.IHttpResponse;
 import java.io.IOException;
@@ -40,12 +42,17 @@ public class HttpResponse implements HttpExchange {
     Map<String, List<String>> headers = responseWrapper.getHeaderNames().stream()
         .collect(toMap(
             identity(),
-            name -> new ArrayList<>(responseWrapper.getHeaders(name))));
+            name -> new ArrayList<>(responseWrapper.getHeaders(name)),
+            HttpResponse::mergeLists));
 
     return HttpResponse.builder()
         .headers(headers)
         .status(responseWrapper.getStatus())
         .body(responseWrapper.getContentAsByteArray())
         .build();
+  }
+
+  private static List<String> mergeLists(List<String> a, List<String> b) {
+    return concat(a.stream(), b.stream()).collect(toUnmodifiableList());
   }
 }

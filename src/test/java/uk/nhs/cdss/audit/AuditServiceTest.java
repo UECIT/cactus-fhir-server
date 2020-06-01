@@ -150,6 +150,9 @@ public class AuditServiceTest {
     when(mockExchangeHelper.getHeadersString(request))
         .thenReturn("test headers");
 
+    when(mockExchangeHelper.getHeader(request, "X-Forwarded-For"))
+        .thenReturn(Optional.of("the-source"));
+
     auditService.startAuditSession(request);
 
     var captor = ArgumentCaptor.forClass(AuditSession.class);
@@ -160,6 +163,7 @@ public class AuditServiceTest {
     assertThat(actual.getRequestUrl(), is("some/uri"));
     assertThat(actual.getEntries(), empty());
     assertThat(actual.getRequestHeaders(), is("test headers"));
+    assertThat(actual.getRequestOrigin(), is("the-source"));
   }
 
   @Test

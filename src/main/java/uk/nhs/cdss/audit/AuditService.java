@@ -74,6 +74,9 @@ public class AuditService {
         .requestUrl(request.getUri())
         .requestMethod(request.getMethod())
         .requestHeaders(exchangeHelper.getHeadersString(request))
+        .requestOrigin(exchangeHelper
+            .getHeader(request, AuditFhirClientInterceptor.SOURCE_HEADER)
+            .orElse("<unknown>"))
         .build();
 
     auditThreadStore.setCurrentSession(audit);
