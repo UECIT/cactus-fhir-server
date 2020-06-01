@@ -2,9 +2,11 @@ package uk.nhs.cdss.audit.model;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Singular;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -27,5 +29,7 @@ public class AuditSession {
 
   List<AuditEntry> entries;
   Instant createdDate;
+  @Singular
+  Map<String, String> additionalProperties;
 
 }

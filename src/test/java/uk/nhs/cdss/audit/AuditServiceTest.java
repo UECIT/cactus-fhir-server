@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -230,9 +231,35 @@ public class AuditServiceTest {
     assertThat(returned.getResponseHeaders(), is("test headers"));
   }
 
+  @Test
+  public void addAuditParameter_withNoSession_shouldThrow() {
+    when(mockThreadStore.getCurrentAuditSession())
+        .thenReturn(Optional.empty());
+
+    expect.expect(IllegalStateException.class);
+    auditService.addAuditProperty("a", "b");
+  }
+
+  @Test
+  public void addAuditParameter_withNullKey_shouldThrow() {
+    expect.expect(NullPointerException.class);
+    auditService.addAuditProperty(null, "b");
+  }
+
+  @Test
+  public void addAuditParameter_addingOnce_shouldAdd() {
+    var session = blankSession();
+    when(mockThreadStore.getCurrentAuditSession())
+        .thenReturn(Optional.of(session));
+
+    auditService.addAuditProperty("a", "b");
+    assertThat(session.getAdditionalProperties(), Matchers.hasEntry("a", "b"));
+  }
+
   private AuditSession blankSession() {
     return AuditSession.builder()
         .entries(new ArrayList<>())
+        .additionalProperties(new HashMap<>())
         .requestUrl("/testBodyPath")
         .build();
   }

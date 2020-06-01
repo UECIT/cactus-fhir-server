@@ -2,6 +2,8 @@ package uk.nhs.cdss.audit;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -70,6 +72,7 @@ public class AuditService {
 
     AuditSession audit = AuditSession.builder()
         .entries(new ArrayList<>())
+        .additionalProperties(new HashMap<>())
         .createdDate(Instant.now())
         .requestUrl(request.getUri())
         .requestMethod(request.getMethod())
@@ -108,6 +111,17 @@ public class AuditService {
       auditThreadStore.removeCurrentSession();
     }
     return session;
+  }
+
+  public void addAuditProperty(String key, String value) {
+    Objects.requireNonNull(key);
+
+    var auditSession = auditThreadStore.getCurrentAuditSession()
+        .orElseThrow(IllegalStateException::new);
+
+    var newProperties = new HashMap<>(auditSession.getAdditionalProperties());
+    newProperties.put(key, value);
+    auditSession.setAdditionalProperties(newProperties);
   }
 
 }
