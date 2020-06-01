@@ -20,6 +20,7 @@ public class ResourceService {
   private final ResourceIdService resourceIdService;
   private final ResourceIndexService resourceIndexService;
   private final FhirContext fhirContext;
+  private final TokenAuthenticationService authService;
 
 
   @Transactional
@@ -33,7 +34,7 @@ public class ResourceService {
     var fhirParser = fhirContext.newJsonParser();
 
     ResourceEntity resourceEntity = ResourceEntity.builder()
-        .supplierId(TokenAuthenticationService.requireSupplierId())
+        .supplierId(authService.requireSupplierId())
         .idVersion(idVersion)
         .resourceType(resource.getResourceType())
         .resourceJson(fhirParser.encodeResourceToString(resource))
@@ -50,7 +51,7 @@ public class ResourceService {
         .findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
         .orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
 
-    TokenAuthenticationService.requireSupplierId(entity.getSupplierId());
+    authService.requireSupplierId(entity.getSupplierId());
 
     ResourceEntity updatedEntity = updateResource(entity, resource);
     resourceRepository.save(updatedEntity);

@@ -25,6 +25,7 @@ public class ResourceLookupService {
 
   private final ResourceRepository resourceRepository;
   private final FhirContext fhirContext;
+  private final TokenAuthenticationService authService;
 
   @Transactional
   public <T extends IBaseResource> T getResource(Long id, Long version, Class<T> clazz) {
@@ -35,7 +36,7 @@ public class ResourceLookupService {
         .orElseThrow(() ->
             new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
 
-    TokenAuthenticationService.requireSupplierId(resource.getSupplierId());
+    authService.requireSupplierId(resource.getSupplierId());
 
     var fhirParser = fhirContext.newJsonParser();
     return ResourceUtil.parseResource(resource, clazz, fhirParser);
@@ -44,7 +45,7 @@ public class ResourceLookupService {
   @Transactional
   public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
     return resourceRepository.findAllBySupplierIdAndResourceType(
-        TokenAuthenticationService.requireSupplierId(),
+        authService.requireSupplierId(),
         ResourceUtil.getResourceType(clazz)
     );
   }

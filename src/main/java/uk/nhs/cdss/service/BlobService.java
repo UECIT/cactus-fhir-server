@@ -15,11 +15,12 @@ import uk.nhs.cdss.repos.BlobRepository;
 public class BlobService {
 
   private final BlobRepository blobRepository;
+  private final TokenAuthenticationService authService;
 
   @Transactional
   public Optional<BlobEntity> getResource(String id) {
     Optional<BlobEntity> blob = blobRepository.findById(id);
-    blob.ifPresent(b -> TokenAuthenticationService.requireSupplierId(b.getSupplierId()));
+    blob.ifPresent(b -> authService.requireSupplierId(b.getSupplierId()));
 
     return blob;
   }
@@ -30,7 +31,7 @@ public class BlobService {
     byte[] digest = DigestUtils.sha1(data);
 
     BlobEntity entity = BlobEntity.builder()
-        .supplierId(TokenAuthenticationService.requireSupplierId())
+        .supplierId(authService.requireSupplierId())
         .id(Base64.encodeBase64URLSafeString(digest))
         .contentType(contentType)
         .resourceData(data)

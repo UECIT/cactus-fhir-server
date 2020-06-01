@@ -29,6 +29,7 @@ public class ResourceIndexService {
   private final ResourceIndexRepository resourceIndexRepository;
   private final ResourceRepository resourceRepository;
   private final FhirContext fhirContext;
+  private final TokenAuthenticationService authService;
 
   private final Multimap<ResourceType, Extractor<?>> extractors = HashMultimap.create();
 
@@ -69,7 +70,7 @@ public class ResourceIndexService {
   }
 
   public <T extends Resource> SearchByType<T> search(Class<T> type) {
-    String supplierId = TokenAuthenticationService.requireSupplierId();
+    String supplierId = authService.requireSupplierId();
     return new SearchByType<>(supplierId, type);
   }
 

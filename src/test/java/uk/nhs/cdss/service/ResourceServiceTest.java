@@ -25,10 +25,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.security.core.context.SecurityContextHolder;
+import uk.nhs.cactus.common.security.JWTHandler;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
@@ -43,6 +46,9 @@ public class ResourceServiceTest {
 
   @InjectMocks
   private ResourceLookupService resourceLookupService;
+
+  @Mock(answer = Answers.CALLS_REAL_METHODS)
+  private TokenAuthenticationService authService;
 
   @Mock
   private ResourceRepository resourceRepository;
