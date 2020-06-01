@@ -16,6 +16,7 @@ import uk.nhs.cdss.audit.model.HttpResponse;
 public class AuditService {
 
   private final AuditThreadStore auditThreadStore;
+  private final HttpExchangeHelper exchangeHelper;
 
   /**
    * Start an audit entry to record an outgoing FHIR request
@@ -30,8 +31,8 @@ public class AuditService {
 
     AuditEntry entry = AuditEntry.builder()
         .dateOfEntry(Instant.now())
-        .requestBody(request.getBodyString())
-        .requestHeaders(request.getHeadersString())
+        .requestBody(exchangeHelper.getBodyString(request, request.getUri()))
+        .requestHeaders(exchangeHelper.getHeadersString(request))
         .requestUrl(request.getUri())
         .requestMethod(request.getMethod())
         .build();
@@ -50,8 +51,8 @@ public class AuditService {
     AuditEntry entry = auditThreadStore.getCurrentEntry()
         .orElseThrow(IllegalStateException::new);
     entry.setResponseStatus(String.valueOf(response.getStatus()));
-    entry.setResponseHeaders(response.getHeadersString());
-    entry.setResponseBody(response.getBodyString());
+    entry.setResponseBody(exchangeHelper.getBodyString(response, entry.getRequestUrl()));
+    entry.setResponseHeaders(exchangeHelper.getHeadersString(response));
 
     auditThreadStore.removeCurrentEntry();
   }
@@ -72,7 +73,7 @@ public class AuditService {
         .createdDate(Instant.now())
         .requestUrl(request.getUri())
         .requestMethod(request.getMethod())
-        .requestHeaders(request.getHeadersString())
+        .requestHeaders(exchangeHelper.getHeadersString(request))
         .build();
 
     auditThreadStore.setCurrentSession(audit);
@@ -95,10 +96,11 @@ public class AuditService {
             auditThreadStore.removeCurrentEntry();
           });
 
-      session.setRequestBody(request.getBodyString());
+
+      session.setRequestBody(exchangeHelper.getBodyString(request, request.getUri()));
       session.setResponseStatus(String.valueOf(response.getStatus()));
-      session.setResponseHeaders(response.getHeadersString());
-      session.setResponseBody(response.getBodyString());
+      session.setResponseHeaders(exchangeHelper.getHeadersString(request));
+      session.setResponseBody(exchangeHelper.getBodyString(response, session.getRequestUrl()));
     } finally {
       auditThreadStore.removeCurrentSession();
     }

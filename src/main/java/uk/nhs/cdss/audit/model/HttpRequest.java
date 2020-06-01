@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder;
+import lombok.Singular;
 import lombok.Value;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
@@ -21,6 +22,7 @@ public class HttpRequest implements HttpExchange {
   String uri;
   String error;
   byte[] body;
+  @Singular
   Map<String, List<String>> headers;
 
   public static HttpRequest from(IHttpRequest theRequest) {

@@ -1,8 +1,6 @@
 package uk.nhs.cdss.audit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.never;
@@ -38,6 +36,9 @@ public class AuditServiceTest {
   @Mock
   private AuditThreadStore mockThreadStore;
 
+  @Mock
+  private HttpExchangeHelper mockExchangeHelper;
+
   @Rule
   public ExpectedException expect = ExpectedException.none();
 
@@ -70,6 +71,11 @@ public class AuditServiceTest {
     when(mockThreadStore.getCurrentAuditSession())
         .thenReturn(Optional.of(mockSession));
 
+    when(mockExchangeHelper.getBodyString(request, "some/uri"))
+        .thenReturn("test body returned");
+    when(mockExchangeHelper.getHeadersString(request))
+        .thenReturn("test headers");
+
     auditService.startEntry(request);
 
     verify(mockThreadStore, never()).removeCurrentEntry();
@@ -78,19 +84,17 @@ public class AuditServiceTest {
         .setCurrentEntry(captor.capture());
 
     AuditEntry actual = captor.getValue();
-    assertThat(actual.getRequestBody(), is("this is the body"));
-    assertThat(actual.getRequestHeaders(), allOf(
-        containsString("Content-Type: [text/*]"),
-        containsString("Header1: [Value1]"),
-        containsString("Header2: [Value2, Value22]")
-    ));
+    assertThat(actual.getRequestBody(), is("test body returned"));
+    assertThat(actual.getRequestHeaders(), is("test headers"));
     assertThat(actual.getRequestUrl(), is("some/uri"));
     assertThat(actual.getRequestMethod(), is("GET"));
   }
 
   @Test
   public void endEntry_setsFields_removesEntry() {
-    AuditEntry testEntry = AuditEntry.builder().build();
+    AuditEntry testEntry = AuditEntry.builder()
+        .requestUrl("/testBodyPath")
+        .build();
     when(mockThreadStore.getCurrentEntry())
         .thenReturn(Optional.of(testEntry));
     HttpResponse response = HttpResponse.builder()
@@ -99,14 +103,14 @@ public class AuditServiceTest {
         .status(200)
         .build();
 
+    when(mockExchangeHelper.getBodyString(response, "/testBodyPath"))
+        .thenReturn("test response body returned");
+    when(mockExchangeHelper.getHeadersString(response))
+        .thenReturn("test headers");
     auditService.endEntry(response);
 
-    assertThat(testEntry.getResponseBody(), is("response body"));
-    assertThat(testEntry.getResponseHeaders(), allOf(
-        containsString("Content-Type: [text/*]"),
-        containsString("Header1: [Value1]"),
-        containsString("Header2: [Value2, Value22]")
-    ));
+    assertThat(testEntry.getResponseBody(), is("test response body returned"));
+    assertThat(testEntry.getResponseHeaders(), is("test headers"));
     assertThat(testEntry.getResponseStatus(), is("200"));
     verify(mockThreadStore).removeCurrentEntry();
   }
@@ -143,6 +147,9 @@ public class AuditServiceTest {
     when(mockThreadStore.getCurrentAuditSession())
         .thenReturn(Optional.empty());
 
+    when(mockExchangeHelper.getHeadersString(request))
+        .thenReturn("test headers");
+
     auditService.startAuditSession(request);
 
     var captor = ArgumentCaptor.forClass(AuditSession.class);
@@ -152,11 +159,7 @@ public class AuditServiceTest {
     assertThat(actual.getRequestMethod(), is("GET"));
     assertThat(actual.getRequestUrl(), is("some/uri"));
     assertThat(actual.getEntries(), empty());
-    assertThat(actual.getRequestHeaders(), allOf(
-        containsString("Content-Type: [text/*]"),
-        containsString("Header1: [Value1]"),
-        containsString("Header2: [Value2, Value22]")
-    ));
+    assertThat(actual.getRequestHeaders(), is("test headers"));
   }
 
   @Test
@@ -197,6 +200,7 @@ public class AuditServiceTest {
 
     HttpRequest testRequest = HttpRequest.builder()
         .body("test body".getBytes())
+        .uri("/testBodyPath")
         .headers(testHeaders())
         .build();
     HttpResponse testResponse = HttpResponse.builder()
@@ -205,23 +209,27 @@ public class AuditServiceTest {
         .body("test response body".getBytes())
         .build();
 
+    when(mockExchangeHelper.getBodyString(testRequest, "/testBodyPath"))
+        .thenReturn("test body returned");
+    when(mockExchangeHelper.getBodyString(testResponse, "/testBodyPath"))
+        .thenReturn("test response body returned");
+    when(mockExchangeHelper.getHeadersString(testRequest))
+        .thenReturn("test headers");
+
     AuditSession returned = auditService.completeAuditSession(testRequest, testResponse);
 
     verify(mockThreadStore, never()).removeCurrentEntry();
     verify(mockThreadStore).removeCurrentSession();
-    assertThat(returned.getRequestBody(), is("test body"));
-    assertThat(returned.getResponseBody(), is("test response body"));
+    assertThat(returned.getRequestBody(), is("test body returned"));
+    assertThat(returned.getResponseBody(), is("test response body returned"));
     assertThat(returned.getResponseStatus(), is("100"));
-    assertThat(returned.getResponseHeaders(), allOf(
-        containsString("Content-Type: [text/*]"),
-        containsString("Header1: [Value1]"),
-        containsString("Header2: [Value2, Value22]")
-    ));
+    assertThat(returned.getResponseHeaders(), is("test headers"));
   }
 
   private AuditSession blankSession() {
     return AuditSession.builder()
         .entries(new ArrayList<>())
+        .requestUrl("/testBodyPath")
         .build();
   }
 
