@@ -1,13 +1,12 @@
-FROM maven:3-jdk-11 as deps
+FROM maven:3-jdk-11 as build
 WORKDIR /app
 
-COPY pom.xml .
-RUN mvn -B -Dmaven.repo.local=/app/.m2 dependency:go-offline
-
-FROM deps as build
-
+ARG GITHUB_USER
+ARG GITHUB_TOKEN
+ENV GITHUB_USER=$GITHUB_USER GITHUB_TOKEN=$GITHUB_TOKEN
+COPY pom.xml settings.xml /app/
 COPY src src
-RUN mvn -B -Dmaven.repo.local=/app/.m2 package
+RUN mvn -B package -DskipTests --settings settings.xml
 
 FROM openjdk:11-jre-slim
 WORKDIR /app
