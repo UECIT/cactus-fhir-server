@@ -40,7 +40,7 @@
       <url>https://dl.bintray.com/ems-test-harness/EMS-Test-Harness</url>
     </repository>
     <repository>
-      <id>cactus-common</id>
+      <id>github</id>
       <name>GitHub UECIT Apache Maven Packages</name>
       <url>https://maven.pkg.github.com/UECIT/cactus-common</url>
     </repository>
