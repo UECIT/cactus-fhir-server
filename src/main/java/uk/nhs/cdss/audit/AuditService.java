@@ -7,6 +7,7 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.audit.model.AuditEntry;
 import uk.nhs.cdss.audit.model.AuditSession;
 import uk.nhs.cdss.audit.model.HttpRequest;
@@ -17,8 +18,12 @@ import uk.nhs.cdss.audit.model.HttpResponse;
 @RequiredArgsConstructor
 public class AuditService {
 
+  private static final String UNKNOWN = "<unknown>";
+  private static final String SUPPLIER_ID = "supplierId";
+
   private final AuditThreadStore auditThreadStore;
   private final HttpExchangeHelper exchangeHelper;
+  private final TokenAuthenticationService authenticationService;
 
   /**
    * Start an audit entry to record an outgoing FHIR request
@@ -70,6 +75,11 @@ public class AuditService {
           auditThreadStore.removeCurrentSession();
         });
 
+    var supplierId = authenticationService.getCurrentSupplierId().orElse(UNKNOWN);
+    var requestOrigin = exchangeHelper
+        .getHeader(request, AuditFhirClientInterceptor.SOURCE_HEADER)
+        .orElse(UNKNOWN);
+
     AuditSession audit = AuditSession.builder()
         .entries(new ArrayList<>())
         .additionalProperties(new HashMap<>())
@@ -77,9 +87,8 @@ public class AuditService {
         .requestUrl(request.getUri())
         .requestMethod(request.getMethod())
         .requestHeaders(exchangeHelper.getHeadersString(request))
-        .requestOrigin(exchangeHelper
-            .getHeader(request, AuditFhirClientInterceptor.SOURCE_HEADER)
-            .orElse("<unknown>"))
+        .requestOrigin(requestOrigin)
+        .additionalProperty(SUPPLIER_ID, supplierId)
         .build();
 
     auditThreadStore.setCurrentSession(audit);
@@ -101,7 +110,6 @@ public class AuditService {
             log.warn("Unclosed audit entry");
             auditThreadStore.removeCurrentEntry();
           });
-
 
       session.setRequestBody(exchangeHelper.getBodyString(request, request.getUri()));
       session.setResponseStatus(String.valueOf(response.getStatus()));

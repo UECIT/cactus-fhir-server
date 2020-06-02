@@ -2,6 +2,7 @@ package uk.nhs.cdss.audit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -23,6 +24,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.audit.model.AuditEntry;
 import uk.nhs.cdss.audit.model.AuditSession;
 import uk.nhs.cdss.audit.model.HttpRequest;
@@ -39,6 +41,9 @@ public class AuditServiceTest {
 
   @Mock
   private HttpExchangeHelper mockExchangeHelper;
+
+  @Mock
+  private TokenAuthenticationService mockAuthenticationService;
 
   @Rule
   public ExpectedException expect = ExpectedException.none();
@@ -154,6 +159,9 @@ public class AuditServiceTest {
     when(mockExchangeHelper.getHeader(request, "X-Forwarded-For"))
         .thenReturn(Optional.of("the-source"));
 
+    when(mockAuthenticationService.getCurrentSupplierId())
+        .thenReturn(Optional.of("testSupplierId"));
+
     auditService.startAuditSession(request);
 
     var captor = ArgumentCaptor.forClass(AuditSession.class);
@@ -165,6 +173,7 @@ public class AuditServiceTest {
     assertThat(actual.getEntries(), empty());
     assertThat(actual.getRequestHeaders(), is("test headers"));
     assertThat(actual.getRequestOrigin(), is("the-source"));
+    assertThat(actual.getAdditionalProperties(), hasEntry("supplierId", "testSupplierId"));
   }
 
   @Test
