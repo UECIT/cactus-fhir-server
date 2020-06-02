@@ -19,7 +19,7 @@
 
     <fhir.version>3.0.0</fhir.version>
     <drools.version>7.28.0.Final</drools.version>
-    <cactus-common.version>0.0.3.3</cactus-common.version>
+    <cactus-common.version>0.0.4</cactus-common.version>
   </properties>
 
   <repositories>
@@ -38,6 +38,14 @@
       <id>bintray-ems-test-harness-EMS-Test-Harness</id>
       <name>bintray</name>
       <url>https://dl.bintray.com/ems-test-harness/EMS-Test-Harness</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>bintray-ems-test-harness-hapi-fhir</id>
+      <name>bintray</name>
+      <url>https://dl.bintray.com/ems-test-harness/hapi-fhir</url>
     </repository>
     <repository>
       <id>github</id>
