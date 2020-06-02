@@ -38,6 +38,7 @@ jobs:
           repository: uecit/cactus-fhir-server/cactus-fhir-server
           tag_with_ref: true
           tag_with_sha: true
+          build_args: GITHUB_USER=${{ github.actor }},GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
   invoke-deployment:
     runs-on: ubuntu-latest
