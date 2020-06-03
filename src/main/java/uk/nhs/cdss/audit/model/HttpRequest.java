@@ -18,6 +18,7 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 @Builder
 public class HttpRequest implements HttpExchange {
 
+  String remoteHost;
   String method;
   String uri;
   String error;
@@ -53,6 +54,7 @@ public class HttpRequest implements HttpExchange {
         .method(requestWrapper.getMethod())
         .uri(requestWrapper.getRequestURI())
         .body(requestWrapper.getContentAsByteArray())
+        .remoteHost(requestWrapper.getRemoteHost())
         .build();
   }
 }

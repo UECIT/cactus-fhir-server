@@ -1,9 +1,12 @@
 package uk.nhs.cdss.audit;
 
+import static org.apache.commons.lang3.StringUtils.trimToNull;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +22,6 @@ import uk.nhs.cdss.audit.model.HttpResponse;
 public class AuditService {
 
   private static final String FORWARDED_HEADER = "X-Forwarded-For";
-  private static final String HOST_HEADER = "Host";
   private static final String UNKNOWN = "<unknown>";
   private static final String SUPPLIER_ID = "supplierId";
 
@@ -79,7 +81,7 @@ public class AuditService {
 
     var supplierId = authenticationService.getCurrentSupplierId().orElse(UNKNOWN);
     var requestOrigin = exchangeHelper.getHeader(request, FORWARDED_HEADER)
-        .or(() -> exchangeHelper.getHeader(request, HOST_HEADER))
+        .or(() -> Optional.ofNullable(trimToNull(request.getRemoteHost())))
         .orElse(UNKNOWN);
 
     AuditSession audit = AuditSession.builder()
