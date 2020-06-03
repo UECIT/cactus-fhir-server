@@ -18,6 +18,8 @@ import uk.nhs.cdss.audit.model.HttpResponse;
 @RequiredArgsConstructor
 public class AuditService {
 
+  private static final String FORWARDED_HEADER = "X-Forwarded-For";
+  private static final String HOST_HEADER = "Host";
   private static final String UNKNOWN = "<unknown>";
   private static final String SUPPLIER_ID = "supplierId";
 
@@ -76,8 +78,8 @@ public class AuditService {
         });
 
     var supplierId = authenticationService.getCurrentSupplierId().orElse(UNKNOWN);
-    var requestOrigin = exchangeHelper
-        .getHeader(request, AuditFhirClientInterceptor.SOURCE_HEADER)
+    var requestOrigin = exchangeHelper.getHeader(request, FORWARDED_HEADER)
+        .or(() -> exchangeHelper.getHeader(request, HOST_HEADER))
         .orElse(UNKNOWN);
 
     AuditSession audit = AuditSession.builder()
