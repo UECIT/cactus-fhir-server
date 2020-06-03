@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Service;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.entities.BlobEntity;
 import uk.nhs.cdss.repos.BlobRepository;
 
@@ -14,11 +15,14 @@ import uk.nhs.cdss.repos.BlobRepository;
 public class BlobService {
 
   private final BlobRepository blobRepository;
+  private final TokenAuthenticationService authService;
 
   @Transactional
   public Optional<BlobEntity> getResource(String id) {
-    // TODO CDSCT-139 check supplier ID
-  	return blobRepository.findById(id);
+    Optional<BlobEntity> blob = blobRepository.findById(id);
+    blob.ifPresent(b -> authService.requireSupplierId(b.getSupplierId()));
+
+    return blob;
   }
 
   @Transactional
@@ -27,7 +31,7 @@ public class BlobService {
     byte[] digest = DigestUtils.sha1(data);
 
     BlobEntity entity = BlobEntity.builder()
-        .supplierId(null) // TODO CDSCT-139
+        .supplierId(authService.requireSupplierId())
         .id(Base64.encodeBase64URLSafeString(digest))
         .contentType(contentType)
         .resourceData(data)

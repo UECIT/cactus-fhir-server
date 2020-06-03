@@ -5,9 +5,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
+import static uk.nhs.cdss.SecurityUtil.setCurrentSupplier;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import java.util.Optional;
 import org.hl7.fhir.dstu3.model.CarePlan;
@@ -23,9 +25,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.security.core.context.SecurityContextHolder;
+import uk.nhs.cactus.common.security.JWTHandler;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
@@ -33,11 +39,16 @@ import uk.nhs.cdss.repos.ResourceRepository;
 @RunWith(MockitoJUnitRunner.class)
 public class ResourceServiceTest {
 
+  public static final String SUPPLIER = "supplier";
+
   @InjectMocks
   private ResourceService resourceService;
 
   @InjectMocks
   private ResourceLookupService resourceLookupService;
+
+  @Mock(answer = Answers.CALLS_REAL_METHODS)
+  private TokenAuthenticationService authService;
 
   @Mock
   private ResourceRepository resourceRepository;
@@ -60,10 +71,13 @@ public class ResourceServiceTest {
   @Before
   public void before() {
     when(fhirContext.newJsonParser()).thenReturn(parser);
+    SecurityContextHolder.clearContext();
   }
 
   @Test
   public void shouldGetResource() {
+    setCurrentSupplier(SUPPLIER);
+
     ResourceEntity carePlanEntity = validCarePlanEntity();
     CarePlan carePlan = validCarePlan();
 
@@ -78,7 +92,23 @@ public class ResourceServiceTest {
   }
 
   @Test
+  public void shouldThrowWhenNotAuthenticated() {
+    setCurrentSupplier("not supplier");
+
+    ResourceEntity carePlanEntity = validCarePlanEntity();
+    CarePlan carePlan = validCarePlan();
+
+    when(resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(1L))
+        .thenReturn(Optional.of(carePlanEntity));
+
+    expectedException.expect(AuthenticationException.class);
+    resourceLookupService.getResource(1L, null, CarePlan.class);
+  }
+
+  @Test
   public void shouldGetVersionedResource() {
+    setCurrentSupplier(SUPPLIER);
+
     ResourceEntity carePlanEntity = validCarePlanEntity();
     CarePlan carePlan = validCarePlan();
 
@@ -94,6 +124,8 @@ public class ResourceServiceTest {
 
   @Test
   public void shouldThrowExceptionWhenResourceNotFound() {
+    setCurrentSupplier(SUPPLIER);
+
     when(resourceRepository.findById(new IdVersion(1L, 1L)))
         .thenReturn(Optional.empty());
 
@@ -104,6 +136,8 @@ public class ResourceServiceTest {
 
   @Test
   public void shouldSaveVersionedResource() {
+    setCurrentSupplier(SUPPLIER);
+
     CarePlan carePlan = validCarePlan();
     ResourceEntity carePlanEntity = validCarePlanEntity();
 
@@ -120,6 +154,8 @@ public class ResourceServiceTest {
 
   @Test
   public void shouldSaveResource() {
+    setCurrentSupplier(SUPPLIER);
+
     CarePlan carePlan = validCarePlan();
     ResourceEntity carePlanEntity = validCarePlanEntity();
 
@@ -136,7 +172,7 @@ public class ResourceServiceTest {
 
   private ResourceEntity validCarePlanEntity() {
     return ResourceEntity.builder()
-        .supplierId(null) // TODO CDSCT-139
+        .supplierId(SUPPLIER)
         .idVersion(new IdVersion(0L, 1L))
         .resourceType(ResourceType.CarePlan)
         .resourceJson(

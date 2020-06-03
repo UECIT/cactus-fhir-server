@@ -1,6 +1,5 @@
 package uk.nhs.cdss.service.index;
 
-import ca.uhn.fhir.context.FhirContext;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +10,6 @@ import org.hl7.fhir.dstu3.model.Reference;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.springframework.stereotype.Component;
 import uk.nhs.cdss.service.GenericResourceLocator;
-import uk.nhs.cdss.service.ResourceLookupService;
 
 @Component
 @RequiredArgsConstructor
@@ -32,7 +30,6 @@ public class EncounterExtractor extends AbstractExtractor<Encounter> {
     }
 
     try {
-      // TODO CDSCT-139 use supplierID and necessary auth to fetch patient resource
       return resourceLocator.findResource(subject, Patient.class)
           .map(Patient::getIdentifier)
           .orElse(null);

@@ -12,12 +12,14 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hl7.fhir.dstu3.model.ResourceType;
 
 @Entity
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @Table(name = "resource_versioned", indexes = {
     @Index(columnList = "supplierId,resource_type")
@@ -47,7 +49,8 @@ public class ResourceEntity extends SupplierPartitioned {
   }
 
   @Builder(toBuilder = true)
-  public ResourceEntity(IdVersion idVersion, String supplierId, ResourceType resourceType, String resourceJson) {
+  public ResourceEntity(IdVersion idVersion, String supplierId, ResourceType resourceType,
+      String resourceJson) {
     super(supplierId);
     this.idVersion = idVersion;
     this.resourceType = resourceType;

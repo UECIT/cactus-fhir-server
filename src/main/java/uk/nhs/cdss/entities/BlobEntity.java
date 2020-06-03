@@ -7,11 +7,13 @@ import javax.persistence.Lob;
 import javax.persistence.Table;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "blob_resources")
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class BlobEntity extends SupplierPartitioned {
 
