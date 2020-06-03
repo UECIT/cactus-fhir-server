@@ -93,6 +93,13 @@
       <version>4.1</version>
     </dependency>
 
+    <!-- AWS -->
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-sqs</artifactId>
+      <version>1.11.792</version>
+    </dependency>
+
     <!-- Database -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
