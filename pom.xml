@@ -16,8 +16,10 @@
     <java.version>11</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
     <fhir.version>3.0.0</fhir.version>
     <drools.version>7.28.0.Final</drools.version>
+    <cactus-common.version>0.0.4</cactus-common.version>
   </properties>
 
   <repositories>
@@ -37,9 +39,28 @@
       <name>bintray</name>
       <url>https://dl.bintray.com/ems-test-harness/EMS-Test-Harness</url>
     </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>bintray-ems-test-harness-hapi-fhir</id>
+      <name>bintray</name>
+      <url>https://dl.bintray.com/ems-test-harness/hapi-fhir</url>
+    </repository>
+    <repository>
+      <id>github</id>
+      <name>GitHub UECIT Apache Maven Packages</name>
+      <url>https://maven.pkg.github.com/UECIT/cactus-common</url>
+    </repository>
   </repositories>
 
   <dependencies>
+    <dependency>
+      <groupId>uk.nhs.cactus</groupId>
+      <artifactId>common</artifactId>
+      <version>${cactus-common.version}</version>
+    </dependency>
+
     <!-- Spring Dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -60,43 +81,6 @@
           <artifactId>android-json</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-
-    <!-- HAPI FHIR Dependencies -->
-    <dependency>
-      <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-base</artifactId>
-      <version>4.1.0</version>
-    </dependency>
-    <dependency>
-      <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-structures-dstu3</artifactId>
-      <version>4.1.0</version>
-    </dependency>
-    <dependency>
-      <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-validation-resources-dstu3</artifactId>
-      <version>3.7.0</version>
-    </dependency>
-    <dependency>
-      <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-server</artifactId>
-      <version>4.1.0</version>
-    </dependency>
-    <dependency>
-      <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-client</artifactId>
-      <version>4.1.0</version>
-    </dependency>
-    <dependency>
-      <groupId>uk.nhs.ctp</groupId>
-      <artifactId>EMCI-Fhir-Profiles</artifactId>
-      <version>0.0.7</version>
-    </dependency>
-    <dependency>
-      <groupId>uk.nhs.ctp</groupId>
-      <artifactId>EMS-Fhir-Extensions</artifactId>
-      <version>0.0.1</version>
     </dependency>
 
     <dependency>
@@ -132,6 +116,11 @@
       <groupId>net.jodah</groupId>
       <artifactId>failsafe</artifactId>
       <version>2.3.5</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt</artifactId>
+      <version>0.7.0</version>
     </dependency>
 
     <!-- Test -->

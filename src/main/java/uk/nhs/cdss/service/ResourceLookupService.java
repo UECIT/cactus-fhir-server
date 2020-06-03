@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.stereotype.Service;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
@@ -24,6 +25,7 @@ public class ResourceLookupService {
 
   private final ResourceRepository resourceRepository;
   private final FhirContext fhirContext;
+  private final TokenAuthenticationService authService;
 
   @Transactional
   public <T extends IBaseResource> T getResource(Long id, Long version, Class<T> clazz) {
@@ -34,7 +36,7 @@ public class ResourceLookupService {
         .orElseThrow(() ->
             new ResourceNotFoundException(new IdType(clazz.getSimpleName(), id.toString())));
 
-    // TODO CDSCT-139 check supplierId
+    authService.requireSupplierId(resource.getSupplierId());
 
     var fhirParser = fhirContext.newJsonParser();
     return ResourceUtil.parseResource(resource, clazz, fhirParser);
@@ -43,7 +45,7 @@ public class ResourceLookupService {
   @Transactional
   public List<ResourceEntity> getAllOfType(Class<? extends IBaseResource> clazz) {
     return resourceRepository.findAllBySupplierIdAndResourceType(
-        null, // TODO CDSCT-139
+        authService.requireSupplierId(),
         ResourceUtil.getResourceType(clazz)
     );
   }

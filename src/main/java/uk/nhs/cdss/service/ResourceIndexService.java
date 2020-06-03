@@ -14,6 +14,7 @@ import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceIndex;
 import uk.nhs.cdss.repos.ResourceIndexRepository;
@@ -28,6 +29,7 @@ public class ResourceIndexService {
   private final ResourceIndexRepository resourceIndexRepository;
   private final ResourceRepository resourceRepository;
   private final FhirContext fhirContext;
+  private final TokenAuthenticationService authService;
 
   private final Multimap<ResourceType, Extractor<?>> extractors = HashMultimap.create();
 
@@ -68,7 +70,7 @@ public class ResourceIndexService {
   }
 
   public <T extends Resource> SearchByType<T> search(Class<T> type) {
-    String supplierId = null; // TODO CDSCT-139
+    String supplierId = authService.requireSupplierId();
     return new SearchByType<>(supplierId, type);
   }
 

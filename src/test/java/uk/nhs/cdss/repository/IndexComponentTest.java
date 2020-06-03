@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.nhs.cdss.SecurityUtil;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceIndex;
 import uk.nhs.cdss.repos.ResourceIndexRepository;
@@ -23,6 +24,8 @@ import uk.nhs.cdss.service.ResourceService;
 @RunWith(SpringRunner.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class IndexComponentTest extends TestCase {
+
+  private static final String SUPPLIER = "supplier";
 
   @Autowired
   ResourceRepository resourceRepository;
@@ -40,6 +43,7 @@ public class IndexComponentTest extends TestCase {
   public void reset() {
     resourceRepository.deleteAll();
     resourceIndexRepository.deleteAll();
+    SecurityUtil.setCurrentSupplier(SUPPLIER);
   }
 
   @Test
@@ -51,7 +55,7 @@ public class IndexComponentTest extends TestCase {
 
     List<ResourceIndex> femalePatients = resourceIndexRepository
         .findAllBySupplierIdAndResourceTypeAndPathAndValue(
-            null, ResourceType.Patient, "gender", "FEMALE");
+            SUPPLIER, ResourceType.Patient, "gender", "FEMALE");
 
     assertEquals("Single patient expected", 1, femalePatients.size());
     assertEquals("Patient ID should match", entity.getIdVersion().getId(),
@@ -71,13 +75,13 @@ public class IndexComponentTest extends TestCase {
     // Old index entry should be removed
     List<ResourceIndex> femalePatients = resourceIndexRepository
         .findAllBySupplierIdAndResourceTypeAndPathAndValue(
-            null, ResourceType.Patient, "gender", "FEMALE");
+            SUPPLIER, ResourceType.Patient, "gender", "FEMALE");
     assertEquals("No female patients expected", 0, femalePatients.size());
 
     // Patient should now be listed as male
     List<ResourceIndex> malePatients = resourceIndexRepository
         .findAllBySupplierIdAndResourceTypeAndPathAndValue(
-            null, ResourceType.Patient, "gender", "MALE");
+            SUPPLIER, ResourceType.Patient, "gender", "MALE");
 
     assertEquals("Single male patient expected", 1, malePatients.size());
     assertEquals("Patient ID should match", entity.getIdVersion().getId(),

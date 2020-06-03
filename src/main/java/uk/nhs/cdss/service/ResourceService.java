@@ -1,14 +1,13 @@
 package uk.nhs.cdss.service;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import java.util.Objects;
 import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.springframework.stereotype.Service;
+import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.entities.ResourceEntity.IdVersion;
 import uk.nhs.cdss.repos.ResourceRepository;
@@ -21,6 +20,7 @@ public class ResourceService {
   private final ResourceIdService resourceIdService;
   private final ResourceIndexService resourceIndexService;
   private final FhirContext fhirContext;
+  private final TokenAuthenticationService authService;
 
 
   @Transactional
@@ -34,7 +34,7 @@ public class ResourceService {
     var fhirParser = fhirContext.newJsonParser();
 
     ResourceEntity resourceEntity = ResourceEntity.builder()
-        .supplierId(null) // TODO CDSCT-139
+        .supplierId(authService.requireSupplierId())
         .idVersion(idVersion)
         .resourceType(resource.getResourceType())
         .resourceJson(fhirParser.encodeResourceToString(resource))
@@ -51,10 +51,7 @@ public class ResourceService {
         .findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(id)
         .orElseThrow(() -> new ResourceNotFoundException(new IdType(id)));
 
-    String supplierId = null; // TODO CDSCT-139
-    if (!Objects.equals(supplierId, entity.getSupplierId())) {
-      throw new AuthenticationException();
-    }
+    authService.requireSupplierId(entity.getSupplierId());
 
     ResourceEntity updatedEntity = updateResource(entity, resource);
     resourceRepository.save(updatedEntity);
