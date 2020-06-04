@@ -24,6 +24,7 @@ public class AuditServerFilter extends OncePerRequestFilter {
   private static final int CONTENT_CACHE_LIMIT = 1 << 20;
 
   private final AuditService auditService;
+  private final SQSService sqsService;
 
   @Override
   protected void doFilterInternal(
@@ -55,8 +56,7 @@ public class AuditServerFilter extends OncePerRequestFilter {
           .completeAuditSession(HttpRequest.from(requestWrapper),
               HttpResponse.from(responseWrapper));
 
-      //TODO: Send audit session to SQS
-      log.info(auditSession.toString());
+      sqsService.sendAudit(auditSession);
       responseWrapper.copyBodyToResponse();
     }
   }
