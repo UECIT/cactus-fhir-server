@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -28,6 +29,8 @@ public class SQSService {
   @Value("${service.name}")
   private String serviceName;
 
+  @Qualifier("enhanced")
+  private final ObjectMapper mapper;
   private final AmazonSQS sqsClient;
   private final TokenAuthenticationService authenticationService;
 
@@ -50,7 +53,7 @@ public class SQSService {
               .withDataType(STRING)
               .withStringValue(supplierId))
           .withQueueUrl(loggingQueue)
-          .withMessageBody(new ObjectMapper().writeValueAsString(session));
+          .withMessageBody(mapper.writeValueAsString(session));
       sqsClient.sendMessage(request);
     } catch (Exception e) {
       log.error("an error occurred sending audit session {} to SQS", session, e);
