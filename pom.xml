@@ -19,7 +19,7 @@
 
     <fhir.version>3.0.0</fhir.version>
     <drools.version>7.28.0.Final</drools.version>
-    <cactus-common.version>0.0.4</cactus-common.version>
+    <cactus-common.version>0.0.5.1</cactus-common.version>
   </properties>
 
   <repositories>
