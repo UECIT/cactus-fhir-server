@@ -72,8 +72,7 @@ public class FHIRRestfulServer extends RestfulServer {
   public void setResourceProviders() {
     Collection<IResourceProvider> genericProviders = Arrays.stream(SupportedResources.values())
         .map(type ->
-            new ResourceProvider(resourceService, resourceLookupService,
-                type.getResourceClass()))
+            new ResourceProvider(resourceService, resourceLookupService, type.getResourceClass()))
         .collect(Collectors.toList());
 
     Collection<IResourceProvider> resourceProviders =
