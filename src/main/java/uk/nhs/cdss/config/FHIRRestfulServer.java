@@ -2,6 +2,7 @@ package uk.nhs.cdss.config;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.server.ETagSupportEnum;
+import ca.uhn.fhir.rest.server.HardcodedServerAddressStrategy;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.RestfulServer;
 import ca.uhn.fhir.rest.server.interceptor.CorsInterceptor;
@@ -12,7 +13,8 @@ import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -24,21 +26,25 @@ import uk.nhs.cdss.service.ResourceService;
 
 @Configuration
 @WebServlet(urlPatterns = {"/fhir/*"}, displayName = "FHIR Server")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class FHIRRestfulServer extends RestfulServer {
 
   private static final long serialVersionUID = 1L;
 
-  private ResourceService resourceService;
-  private ResourceLookupService resourceLookupService;
-  private FhirContext ctx;
+  @Value("${fhir.server}")
+  private String fhirServer;
 
-  private Collection<IResourceProvider> customResourceProviders;
+  private final ResourceService resourceService;
+  private final ResourceLookupService resourceLookupService;
+  private final FhirContext ctx;
+
+  private final Collection<IResourceProvider> customResourceProviders;
 
   @Override
   protected void initialize() throws ServletException {
     setFhirContext(ctx);
     setETagSupport(ETagSupportEnum.ENABLED);
+    setServerAddressStrategy(new HardcodedServerAddressStrategy(fhirServer));
 
     CorsConfiguration config = new CorsConfiguration();
     config.setMaxAge(10L);
@@ -66,7 +72,8 @@ public class FHIRRestfulServer extends RestfulServer {
   public void setResourceProviders() {
     Collection<IResourceProvider> genericProviders = Arrays.stream(SupportedResources.values())
         .map(type ->
-            new ResourceProvider(resourceService, resourceLookupService, type.getResourceClass()))
+            new ResourceProvider(resourceService, resourceLookupService,
+                type.getResourceClass()))
         .collect(Collectors.toList());
 
     Collection<IResourceProvider> resourceProviders =
