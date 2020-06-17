@@ -1,10 +1,5 @@
 package uk.nhs.cdss.audit;
 
-import java.io.IOException;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
@@ -15,6 +10,13 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 import uk.nhs.cdss.audit.model.AuditSession;
 import uk.nhs.cdss.audit.model.HttpRequest;
 import uk.nhs.cdss.audit.model.HttpResponse;
+import uk.nhs.cdss.audit.sqs.AuditSender;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
@@ -24,7 +26,7 @@ public class AuditServerFilter extends OncePerRequestFilter {
   private static final int CONTENT_CACHE_LIMIT = 1 << 20;
 
   private final AuditService auditService;
-  private final SQSService sqsService;
+  private final AuditSender auditSender;
 
   @Override
   protected void doFilterInternal(
@@ -56,7 +58,7 @@ public class AuditServerFilter extends OncePerRequestFilter {
           .completeAuditSession(HttpRequest.from(requestWrapper),
               HttpResponse.from(responseWrapper));
 
-      sqsService.sendAudit(auditSession);
+      auditSender.sendAudit(auditSession);
       responseWrapper.copyBodyToResponse();
     }
   }

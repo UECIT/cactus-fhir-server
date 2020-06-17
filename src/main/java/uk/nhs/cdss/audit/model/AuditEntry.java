@@ -1,10 +1,11 @@
 package uk.nhs.cdss.audit.model;
 
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
+
+import java.time.Instant;
 
 /**
  * Represents calls made by this web service's FHIR client during an audit session
@@ -24,8 +25,5 @@ public class AuditEntry {
   String responseBody;
 
   Instant dateOfEntry;
-  String supplierId;
-  String requestId;
-  String sessionId;
 
 }

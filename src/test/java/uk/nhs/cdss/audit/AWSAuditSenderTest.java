@@ -14,7 +14,9 @@ import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.Collections;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -24,12 +26,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import uk.nhs.cactus.common.security.TokenAuthenticationService;
 import uk.nhs.cdss.audit.model.AuditEntry;
 import uk.nhs.cdss.audit.model.AuditSession;
+import uk.nhs.cdss.audit.sqs.AWSAuditSender;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SQSServiceTest {
+public class AWSAuditSenderTest {
 
   @InjectMocks
-  private SQSService sqsService;
+  private AWSAuditSender sqsService;
 
   @Mock
   private ObjectMapper mockMapper;
@@ -40,12 +43,14 @@ public class SQSServiceTest {
   @Mock
   private TokenAuthenticationService mockAuthService;
 
-  @Test
-  public void shouldNotSendIfNoQueue() {
-    ReflectionTestUtils.setField(sqsService, "loggingQueue", null);
-    when(mockAuthService.requireSupplierId())
-        .thenReturn("mocksupplierid");
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
 
+  @Test
+  public void shouldFailIfNoQueue() {
+    ReflectionTestUtils.setField(sqsService, "loggingQueue", null);
+
+    exception.expect(IllegalArgumentException.class);
     sqsService.sendAudit(AuditSession.builder().build());
 
     verifyZeroInteractions(mockSqs);
