@@ -10,6 +10,7 @@ import static uk.nhs.cdss.SecurityUtil.setCurrentSupplier;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
+import ca.uhn.fhir.rest.server.exceptions.ForbiddenOperationException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import java.util.Optional;
 import org.hl7.fhir.dstu3.model.CarePlan;
@@ -93,7 +94,7 @@ public class ResourceServiceTest {
 
   @Test
   public void shouldThrowWhenNotAuthenticated() {
-    setCurrentSupplier("not supplier");
+    SecurityContextHolder.getContext().setAuthentication(null);
 
     ResourceEntity carePlanEntity = validCarePlanEntity();
     CarePlan carePlan = validCarePlan();
@@ -102,6 +103,20 @@ public class ResourceServiceTest {
         .thenReturn(Optional.of(carePlanEntity));
 
     expectedException.expect(AuthenticationException.class);
+    resourceLookupService.getResource(1L, null, CarePlan.class);
+  }
+
+  @Test
+  public void shouldThrowWhenNotAuthorized() {
+    setCurrentSupplier("not supplier");
+
+    ResourceEntity carePlanEntity = validCarePlanEntity();
+    CarePlan carePlan = validCarePlan();
+
+    when(resourceRepository.findFirstByIdVersion_IdOrderByIdVersion_VersionDesc(1L))
+        .thenReturn(Optional.of(carePlanEntity));
+
+    expectedException.expect(ForbiddenOperationException.class);
     resourceLookupService.getResource(1L, null, CarePlan.class);
   }
 
