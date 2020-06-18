@@ -16,6 +16,7 @@ public class MapperConfig {
    * behaviour which was not yet the default in our version of jackson.
    * @return The mapper with the configured modifiers.
    */
+  @Bean
   public ObjectMapper mapper() {
 
     return new ObjectMapper()
