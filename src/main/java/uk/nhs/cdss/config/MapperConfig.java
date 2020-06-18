@@ -16,8 +16,8 @@ public class MapperConfig {
    * behaviour which was not yet the default in our version of jackson.
    * @return The mapper with the configured modifiers.
    */
-  @Bean("enhanced")
-  public ObjectMapper registryObjectMapper() {
+  @Bean
+  public ObjectMapper mapper() {
 
     return new ObjectMapper()
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
