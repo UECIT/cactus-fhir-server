@@ -58,8 +58,9 @@ public class HttpExchangeHelper {
     var getAsGzip = getHeader(exchange, HttpHeaders.CONTENT_ENCODING)
         .map(contentEncoding -> gzipDecoder.decode(body, path, contentEncoding));
 
-    return getAsText
-        .or(() -> getAsGzip)
+    // TODO: gzip encoding and binary/non-text responses aren't mutually exclusive
+    return getAsGzip
+        .or(() -> getAsText)
         .orElseGet(() -> Base64.getEncoder().encodeToString(body));
   }
 

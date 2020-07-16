@@ -117,7 +117,7 @@ public class AuditService {
 
       session.setRequestBody(exchangeHelper.getBodyString(request, request.getUri()));
       session.setResponseStatus(String.valueOf(response.getStatus()));
-      session.setResponseHeaders(exchangeHelper.getHeadersString(request));
+      session.setResponseHeaders(exchangeHelper.getHeadersString(response));
       session.setResponseBody(exchangeHelper.getBodyString(response, session.getRequestUrl()));
     } finally {
       auditThreadStore.removeCurrentSession();
