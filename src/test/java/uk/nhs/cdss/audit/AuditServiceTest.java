@@ -227,7 +227,7 @@ public class AuditServiceTest {
         .thenReturn("test body returned");
     when(mockExchangeHelper.getBodyString(testResponse, "/testBodyPath"))
         .thenReturn("test response body returned");
-    when(mockExchangeHelper.getHeadersString(testRequest))
+    when(mockExchangeHelper.getHeadersString(testResponse))
         .thenReturn("test headers");
 
     AuditSession returned = auditService.completeAuditSession(testRequest, testResponse);
