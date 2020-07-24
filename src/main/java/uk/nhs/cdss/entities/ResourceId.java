@@ -4,9 +4,11 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
+@NoArgsConstructor
 @Table(name = "resource_id")
 public class ResourceId {
 
@@ -19,9 +21,6 @@ public class ResourceId {
   @Id
   private long id = GLOBAL;
   private long value = INITIAL_VALUE;
-
-  public ResourceId() {
-  }
 
   public ResourceId(long id) {
     this(id, INITIAL_VALUE);
