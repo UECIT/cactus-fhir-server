@@ -10,11 +10,13 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hl7.fhir.dstu3.model.ResourceType;
 
 @Entity
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @Table(name = "resource_index", indexes = {
     @Index(columnList = "supplierId,resource_type,path,value")

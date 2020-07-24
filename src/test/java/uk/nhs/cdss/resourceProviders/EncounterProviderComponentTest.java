@@ -10,6 +10,7 @@ import org.hamcrest.Matcher;
 import org.hl7.fhir.dstu3.model.Encounter;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.nhs.cdss.SecurityUtil;
 import uk.nhs.cdss.entities.ResourceEntity;
 import uk.nhs.cdss.fixtures.EncounterFixtures;
 import uk.nhs.cdss.fixtures.PatientFixtures;
@@ -31,6 +33,8 @@ import uk.nhs.cdss.service.ResourceService;
 )
 public class EncounterProviderComponentTest {
 
+  private static final String SUPPLIER = "supplier";
+
   @Autowired
   private EncounterProvider encounterProvider;
 
@@ -39,6 +43,11 @@ public class EncounterProviderComponentTest {
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
+
+  @Before
+  public void setup() {
+    SecurityUtil.setCurrentSupplier(SUPPLIER);
+  }
 
   @Test
   public void findsEncounter() {
