@@ -28,7 +28,11 @@ public class ResourceIdServiceTest {
 
   @Test
   public void createsNewId() {
-    when(idRepository.existsById(1L)).thenReturn(false);
+
+    when(idRepository.existsById(ResourceId.GLOBAL)).thenReturn(false);
+
+    ResourceId expectedInitialId = new ResourceId(ResourceId.GLOBAL);
+    when(idRepository.save(expectedInitialId)).thenReturn(expectedInitialId);
 
     Long returnedId = resourceIdService.nextId();
 
