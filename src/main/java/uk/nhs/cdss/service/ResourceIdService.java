@@ -13,11 +13,11 @@ public class ResourceIdService {
   private final ResourceIdRepository resourceIdRepository;
 
   public Long nextId() {
-    if (!resourceIdRepository.existsById(1L)) {
-      resourceIdRepository.save(new ResourceId());
-      return ResourceId.INITIAL_VALUE;
+    if (!resourceIdRepository.existsById(ResourceId.GLOBAL)) {
+      ResourceId id = resourceIdRepository.save(new ResourceId(ResourceId.GLOBAL));
+      return id.getValue();
     }
 
-    return resourceIdRepository.incrementAndGet(1L);
+    return resourceIdRepository.incrementAndGet(ResourceId.GLOBAL);
   }
 }
