@@ -64,3 +64,25 @@ jobs:
         env:
           webhook_url: ${{ secrets.WEBHOOK_URL }}
           webhook_secret: ${{ secrets.WEBHOOK_SECRET }}
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: [publish-app]
+    steps:
+      - name: Deploy to staging environment
+        uses: distributhor/workflow-webhook@v1
+        env:
+          webhook_url: ${{ secrets.STAGING_WEBHOOK_URL }}
+          webhook_secret: ${{ secrets.STAGING_WEBHOOK_SECRET }}
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [publish-app]
+    steps:
+      - name: Deploy to production environment
+        uses: distributhor/workflow-webhook@v1
+        env:
+          webhook_url: ${{ secrets.PROD_WEBHOOK_URL }}
+          webhook_secret: ${{ secrets.PROD_WEBHOOK_SECRET }}
