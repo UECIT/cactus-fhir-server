@@ -1,4 +1,4 @@
-package uk.nhs.cdss.audit.config;
+package uk.nhs.cdss.config;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.apache.ApacheRestfulClientFactory;
@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @RequiredArgsConstructor
-public class AuditConfig {
+public class InterceptorConfig {
 
   private final List<IClientInterceptor> clientInterceptors;
   private final FhirContext fhirContext;
