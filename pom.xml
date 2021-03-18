@@ -21,7 +21,7 @@
     <drools.version>7.28.0.Final</drools.version>
     <cactus-common.version>0.0.5.8</cactus-common.version>
 
-    <elastic-search-version>7.8.0</elastic-search-version>
+    <elastic-search-version>7.11.2</elastic-search-version>
   </properties>
 
   <dependencyManagement>
